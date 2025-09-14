@@ -98,10 +98,10 @@ export async function generateCertificateBengali(data: CertificateData): Promise
     // Create SVG with Bengali font support - only name and event name
     const userNameSvg = `
       <svg width="${width}" height="${height}">
-        <text x="${width / 2}" y="${height * 0.45}" 
+        <text x="${width / 2 +350}" y="${height * 0.45+90}" 
               text-anchor="middle" 
-              font-family="serif" 
-              font-size="36" 
+              font-family="Broadway" 
+              font-size="98" 
               font-weight="bold" 
               fill="#000000">
           ${data.userName}
@@ -111,10 +111,10 @@ export async function generateCertificateBengali(data: CertificateData): Promise
 
     const eventNameSvg = `
       <svg width="${width}" height="${height}">
-        <text x="${width / 2}" y="${height * 0.6}" 
+        <text x="${width / 2 + 340}" y="${height * 0.6 + 200}" 
               text-anchor="middle" 
               font-family="serif" 
-              font-size="24" 
+              font-size="60" 
               font-weight="600" 
               fill="#000000">
           ${data.eventName}
