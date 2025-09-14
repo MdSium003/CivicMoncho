@@ -4,8 +4,56 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Target, Eye, Heart, Mail, User, Facebook } from "lucide-react";
+import { Target, Eye, Heart, Mail, User, Facebook, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+interface DeveloperCardProps {
+  name: string;
+  role: string;
+  email: string;
+  avatar: string;
+  description: string;
+  githubUrl: string;
+  facebookUrl: string;
+}
+
+const DeveloperCard = ({ name, role, email, avatar, description, githubUrl, facebookUrl }: DeveloperCardProps) => {
+  // Construct the Gmail compose URL
+  const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}`;
+
+  return (
+    <div 
+      className="relative group rounded-2xl shadow-2xl overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 ease-in-out h-96 bg-cover bg-center"
+      style={{ backgroundImage: `url(${avatar})` }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent group-hover:from-black/90 transition-all duration-300"></div>
+      <div className="absolute bottom-0 left-0 right-0 p-6 text-white flex flex-col justify-end h-full">
+        <div>
+          <h3 className="text-3xl font-bold">{name}</h3>
+          <p className="text-purple-300 font-semibold mb-2">{role}</p>
+          <p className="text-gray-200 mb-4 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 h-0 group-hover:h-auto">
+            {description}
+          </p>
+          <div className="flex items-center justify-between mt-4">
+            <a
+              href={gmailUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-black bg-white hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-white transition duration-300"
+            >
+              <Mail className="h-4 w-4 mr-2" />
+              Contact
+            </a>
+            <div className="flex space-x-3">
+                <a href={githubUrl} target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white transition-colors"><Github size={20} /></a>
+                <a href={facebookUrl} target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white transition-colors"><Facebook size={20} /></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function About() {
   const { t, language } = useLanguage();
@@ -67,22 +115,31 @@ export default function About() {
   // Team members data
   const teamMembers = [
     {
-      name: "Md.Sium",
-      role: "Frontend Developer",
-      description: "Mohammad is the creative mind behind the user interface, focusing on creating a seamless and engaging user experience.",
-      image: "/sium.jpg"
+      name: "Mohammad Sium",
+      role: "CSE, BUET",
+      email: "mdsium2004@gmail.com",
+      avatar: "/sium.jpg",
+      githubUrl: "https://github.com/MdSium003",
+      facebookUrl: "https://www.facebook.com/Md.Sium.0003",
+      description: "Mohammad is the creative mind behind the user interface, focusing on creating a seamless and engaging user experience."
     },
     {
       name: "Mahdiat Tarannum", 
-      role: "UI/UX Designer",
-      description: "Mahdiat focuses on creating intuitive and visually appealing user experiences, ensuring every interaction is delightful.",
-      image: "/mahdiat.jpg"
+      role: "CSE, BUET",
+      email: "mahdiat.tarannum@gmail.com",
+      avatar: "/mahdiat.jpg",
+      githubUrl: "https://github.com/mahdiat-tarannum",
+      facebookUrl: "https://www.facebook.com/mahdiat.tt",
+      description: "Mahdiat shapes the product's look and feel, ensuring every interaction is both beautiful and functional."
     },
     {
       name: "Rafsan Jani",
-      role: "Backend Developer", 
-      description: "Rafsan builds robust and scalable server-side applications, ensuring seamless data flow and high performance.",
-      image: "/rafsan.jpg"
+      role: "CSE, BUET", 
+      email: "rafsan.jani@gmail.com",
+      avatar: "/rafsan.jpg",
+      githubUrl: "https://github.com/rafsan-jani",
+      facebookUrl: "https://www.facebook.com/rafsanjbi",
+      description: "Rafsan defines the product's strategic direction, ensuring it solves real-world problems and achieves commercial success."
     }
   ];
 
@@ -186,42 +243,16 @@ export default function About() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
           {teamMembers.map((member, index) => (
-            <Card key={index} className="overflow-hidden border-none shadow-lg bg-transparent">
-              <div className="relative w-full h-64">
-                <img
-                  src={member.image}
-                  alt={member.name}
-                  className="w-full h-full object-cover rounded-t-lg"
-                  data-testid={`team-member-${member.name.toLowerCase().replace(/\s/g, '-')}`}
-                />
-                {/* Gradient overlay on image */}
-                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 to-transparent rounded-t-lg"></div>
-              </div>
-              <CardContent className="p-6 bg-gray-900 text-white rounded-b-lg -mt-12 relative z-10">
-                <h3 className="text-xl font-bold text-white mb-1" data-testid={`team-member-${member.name.toLowerCase().replace(/\s/g, '-')}-name`}>
-                  {member.name}
-                </h3>
-                <p className="text-sm text-purple-300 mb-3" data-testid={`team-member-${member.name.toLowerCase().replace(/\s/g, '-')}-role`}>
-                  {member.role}
-                </p>
-                <p className="text-sm text-gray-300 mb-4" data-testid={`team-member-${member.name.toLowerCase().replace(/\s/g, '-')}-description`}>
-                  {member.description}
-                </p>
-                <div className="flex items-center justify-between mt-4">
-                  <Button variant="secondary" className="text-black bg-white hover:bg-gray-100" data-testid={`team-member-${member.name.toLowerCase().replace(/\s/g, '-')}-contact`}>
-                    <Mail className="mr-2 h-4 w-4" /> {t("যোগাযোগ", "Contact")}
-                  </Button>
-                  <div className="flex space-x-3">
-                    <a href="#" className="text-white hover:text-purple-300 transition-colors" data-testid={`team-member-${member.name.toLowerCase().replace(/\s/g, '-')}-social-user`}>
-                      <User className="h-5 w-5" />
-                    </a>
-                    <a href="#" className="text-white hover:text-purple-300 transition-colors" data-testid={`team-member-${member.name.toLowerCase().replace(/\s/g, '-')}-social-facebook`}>
-                      <Facebook className="h-5 w-5" />
-                    </a>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <DeveloperCard
+              key={index}
+              name={member.name}
+              role={member.role}
+              email={member.email}
+              avatar={member.avatar}
+              description={member.description}
+              githubUrl={member.githubUrl}
+              facebookUrl={member.facebookUrl}
+            />
           ))}
         </div>
 
