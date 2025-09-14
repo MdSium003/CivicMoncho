@@ -82,7 +82,7 @@ export default function Header() {
     <>
       <nav className="bg-card/95 backdrop-blur-sm shadow-lg border-b border-border sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-[auto,1fr,auto] items-center h-16">
+          <div className="grid grid-cols-[auto,1fr,auto] items-center h-16 gap-8">
             {/* Logo */}
             <Link href="/" className="flex items-center animate-fade-in flex-shrink-0">
               <div className="flex-shrink-0">

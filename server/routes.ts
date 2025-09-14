@@ -2,8 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { threads, threadComments, users, projects as projectsTable, projectVotes, specialProjectVotes, pendingEvents, events as eventsTable, eventVolunteers, eventGoings, eventHelpfulVotes, notifications, notificationReads, aboutUs, contactInfo, eventParticipation } from "@shared/schema";
+import { threads, threadComments, users, projects as projectsTable, projectVotes, specialProjectVotes, pendingEvents, events as eventsTable, eventVolunteers, eventGoings, eventHelpfulVotes, notifications, notificationReads, aboutUs, contactInfo, eventParticipation, contactSubmissions } from "@shared/schema";
 import { desc, eq, inArray, sql as dsql, and, lt } from "drizzle-orm";
+import { generateCertificate, generateCertificateBengali } from "./certificateGenerator";
 
 // Helper function to check if an event is finished (past today's date)
 function isEventFinished(eventDate: string): boolean {
@@ -1071,6 +1072,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Submit Contact Form
+  app.post("/api/contact/submit", async (req, res) => {
+    try {
+      const { name, email, subject, message } = req.body;
+      
+      // Validate required fields
+      if (!name || !email || !subject || !message) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+      
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+      
+      // Save contact submission to database
+      const submission = await db.insert(contactSubmissions).values({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        subject: subject.trim(),
+        message: message.trim(),
+      }).returning();
+      
+      res.json({ 
+        message: "Contact form submitted successfully",
+        submissionId: submission[0].id 
+      });
+    } catch (e) {
+      console.error("Error submitting contact form:", e);
+      res.status(500).json({ message: "Failed to submit contact form" });
+    }
+  });
+
   // Get user's finished events (events that are past today's date)
   app.get("/api/user/finished-events", async (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
@@ -1142,8 +1177,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Generate certificate URL (in a real app, this would generate an actual certificate)
-      const certificateUrl = `/api/certificates/${participationId}.pdf`;
+      // Generate certificate URL
+      const certificateUrl = `/api/certificates/${participationId}.png`;
 
       // Update participation with certificate info
       await db
@@ -1165,7 +1200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download certificate
-  app.get("/api/certificates/:participationId.pdf", async (req, res) => {
+  app.get("/api/certificates/:participationId.png", async (req, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
     // @ts-ignore
     const user = req.user as any;
@@ -1201,87 +1236,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Certificate not generated" });
       }
 
-      // For now, return a simple PDF response (in a real app, generate actual certificate)
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="certificate-${event.titleEn.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf"`);
-      
-      // Simple PDF content (in a real app, use a PDF library like puppeteer or pdfkit)
-      const pdfContent = `%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
+      // Generate the actual certificate image
+      const certificateData = {
+        userName: `${participantUser.firstName} ${participantUser.lastName}`,
+        eventName: event.titleEn,
+        eventDate: event.date,
+        eventLocation: event.location,
+        participationType: part.participationType as 'volunteer' | 'going'
+      };
 
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
+      // Generate certificate (try Bengali first, fallback to English)
+      let certificateBuffer: Buffer;
+      try {
+        certificateBuffer = await generateCertificateBengali(certificateData);
+      } catch (error) {
+        console.log('Bengali certificate generation failed, falling back to English:', error);
+        certificateBuffer = await generateCertificate(certificateData);
+      }
 
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
->>
-endobj
+      // Set headers for PNG image
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Content-Disposition', `attachment; filename="certificate-${event.titleEn.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png"`);
+      res.setHeader('Content-Length', certificateBuffer.length);
 
-4 0 obj
-<<
-/Length 200
->>
-stream
-BT
-/F1 24 Tf
-100 700 Td
-(Certificate of Participation) Tj
-0 -50 Td
-/F1 18 Tf
-(This is to certify that) Tj
-0 -30 Td
-/F1 20 Tf
-(${participantUser.firstName} ${participantUser.lastName}) Tj
-0 -30 Td
-/F1 16 Tf
-(has successfully participated in) Tj
-0 -30 Td
-/F1 18 Tf
-(${event.titleEn}) Tj
-0 -30 Td
-/F1 14 Tf
-(Event Date: ${event.date}) Tj
-0 -30 Td
-/F1 14 Tf
-(Location: ${event.location}) Tj
-0 -50 Td
-/F1 16 Tf
-(Thank you for your contribution!) Tj
-ET
-endstream
-endobj
-
-xref
-0 5
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000204 00000 n 
-trailer
-<<
-/Size 5
-/Root 1 0 R
->>
-startxref
-454
-%%EOF`;
-
-      res.send(Buffer.from(pdfContent));
+      res.send(certificateBuffer);
     } catch (e) {
       console.error("Error downloading certificate:", e);
       res.status(500).json({ message: "Failed to download certificate" });

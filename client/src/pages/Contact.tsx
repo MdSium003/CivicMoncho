@@ -58,8 +58,20 @@ export default function Contact() {
     setIsSubmitting(true);
     
     try {
-      // Simulate form submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/contact/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit form');
+      }
+      
+      const result = await response.json();
       
       toast({
         title: t('বার্তা পাঠানো হয়েছে', 'Message Sent'),
@@ -68,9 +80,10 @@ export default function Contact() {
       
       setFormData({ name: "", email: "", subject: "", message: "" });
     } catch (error) {
+      console.error('Contact form submission error:', error);
       toast({
         title: t('ত্রুটি', 'Error'),
-        description: t('বার্তা পাঠাতে ব্যর্থ। আবার চেষ্টা করুন।', 'Failed to send message. Please try again.'),
+        description: error instanceof Error ? error.message : t('বার্তা পাঠাতে ব্যর্থ। আবার চেষ্টা করুন।', 'Failed to send message. Please try again.'),
         variant: 'destructive',
       });
     } finally {

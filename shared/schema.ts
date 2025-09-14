@@ -221,6 +221,16 @@ export const eventParticipation = pgTable("event_participation", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const contactSubmissions = pgTable("contact_submissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  status: text("status").default("new").notNull(), // 'new' | 'read' | 'replied' | 'closed'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export const insertPendingApprovalSchema = createInsertSchema(pendingApprovals).omit({ id: true });
 export const insertThreadSchema = createInsertSchema(threads).omit({ id: true, createdAt: true, likes: true, pinned: true });
@@ -269,6 +279,12 @@ export const insertEventParticipationSchema = createInsertSchema(eventParticipat
   certificateGenerated: true,
 });
 
+export const insertContactSubmissionSchema = createInsertSchema(contactSubmissions).omit({
+  id: true,
+  createdAt: true,
+  status: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPendingApproval = z.infer<typeof insertPendingApprovalSchema>;
@@ -299,3 +315,5 @@ export type InsertContactInfo = z.infer<typeof insertContactInfoSchema>;
 export type ContactInfo = typeof contactInfo.$inferSelect;
 export type InsertEventParticipation = z.infer<typeof insertEventParticipationSchema>;
 export type EventParticipation = typeof eventParticipation.$inferSelect;
+export type InsertContactSubmission = z.infer<typeof insertContactSubmissionSchema>;
+export type ContactSubmission = typeof contactSubmissions.$inferSelect;

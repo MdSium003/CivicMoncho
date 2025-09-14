@@ -151,11 +151,11 @@ export default function MyProfile() {
 
   const handleDownloadCertificate = (participationId: string, eventTitle: string) => {
     const link = document.createElement('a');
-    link.href = `/api/certificates/${participationId}.pdf`;
+    link.href = `/api/certificates/${participationId}.png`;
     link.target = '_blank';
     
     // Sanitize the event name to create a valid filename
-    const fileName = `Certificate-${eventTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+    const fileName = `Certificate-${eventTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
     link.setAttribute('download', fileName);
     
     // Append to the DOM, trigger the click, and then remove it
