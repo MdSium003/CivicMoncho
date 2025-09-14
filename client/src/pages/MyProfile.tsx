@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from "../contexts/LanguageContext";
-import { Download, User, MapPin, Mail, Phone, Award } from 'lucide-react';
+import { Download, User, MapPin, Mail, Phone, Award, Calendar, Clock, Loader2 } from 'lucide-react';
 
 // --- ADDED: Self-contained Button component to resolve import error ---
 const Button = ({ children, className, variant, size, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'outline' | 'ghost' | 'default', size?: 'sm' | 'icon' | 'default' }) => {
@@ -59,28 +60,34 @@ const userProfile = {
   phone: "01712345678",
 };
 
-// Mock event data
-const eventsWorked = [
-  {
-    id: 1,
-    nameBn: "বৃক্ষরোপণ কর্মসূচি ২০২২",
-    nameEn: "Tree Plantation Program 2022",
-  },
-  {
-    id: 2,
-    nameBn: "קהילה ניקיון כונן",
-    nameEn: "Community Cleanup Drive",
-  },
-  {
-    id: 3,
-    nameBn: "বিনামূল্যে স্বাস্থ্য পরীক্ষা ক্যাম্প",
-    nameEn: "Free Health Check-up Camp",
-  },
-];
+// Types for finished events
+type FinishedEvent = {
+  event: {
+    id: string;
+    titleBn: string;
+    titleEn: string;
+    descriptionBn: string;
+    descriptionEn: string;
+    category: string;
+    date: string;
+    location: string;
+    imageUrl: string;
+  };
+  participation: {
+    id: string;
+    eventId: string;
+    userId: string;
+    participationType: 'volunteer' | 'going';
+    certificateGenerated: number;
+    certificateUrl: string | null;
+    createdAt: string;
+  };
+};
 
 export default function MyProfile() {
   const { t } = useLanguage();
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<SessionUser>(null);
   const [loading, setLoading] = useState(true);
 
@@ -104,19 +111,77 @@ export default function MyProfile() {
     return () => { cancelled = true; };
   }, [navigate]);
 
-  const handleDownload = (eventName: string) => {
-    const certificateUrl = '/certificate.jpg';
+  // Fetch finished events
+  const { data: finishedEvents, isLoading: eventsLoading, error: eventsError } = useQuery<FinishedEvent[]>({
+    queryKey: ['/api/user/finished-events'],
+    enabled: !!user,
+  });
+
+  // Debug logging
+  useEffect(() => {
+    if (finishedEvents) {
+      console.log('Finished events:', finishedEvents);
+    }
+    if (eventsError) {
+      console.error('Events error:', eventsError);
+    }
+  }, [finishedEvents, eventsError]);
+
+  // Generate certificate mutation
+  const generateCertificateMutation = useMutation({
+    mutationFn: async (participationId: string) => {
+      const response = await fetch(`/api/user/generate-certificate/${participationId}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to generate certificate');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      // Refetch finished events to get updated certificate status
+      queryClient.invalidateQueries({ queryKey: ['/api/user/finished-events'] });
+    },
+  });
+
+  const handleGenerateCertificate = (participationId: string) => {
+    generateCertificateMutation.mutate(participationId);
+  };
+
+  const handleDownloadCertificate = (participationId: string, eventTitle: string) => {
     const link = document.createElement('a');
-    link.href = certificateUrl;
+    link.href = `/api/certificates/${participationId}.pdf`;
+    link.target = '_blank';
     
     // Sanitize the event name to create a valid filename
-    const fileName = `Certificate-${eventName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.jpeg`;
+    const fileName = `Certificate-${eventTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
     link.setAttribute('download', fileName);
     
     // Append to the DOM, trigger the click, and then remove it
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const getParticipationTypeText = (type: string) => {
+    switch (type) {
+      case 'volunteer':
+        return t('স্বেচ্ছাসেবক', 'Volunteer');
+      case 'going':
+        return t('অংশগ্রহণকারী', 'Participant');
+      default:
+        return type;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   if (loading) {
@@ -163,27 +228,98 @@ export default function MyProfile() {
           </div>
         </div>
 
-        {/* Events Worked Section */}
+        {/* Finished Events Section */}
         <div>
           <h2 className="text-2xl font-bold text-primary mb-4 flex items-center">
              <Award className="w-6 h-6 mr-3"/>
-            {t("যেসব ইভেন্টে কাজ করেছি", "Events Worked")}
+            {t("সম্পন্ন ইভেন্টসমূহ", "Finished Events")}
           </h2>
-          <div className="space-y-4">
-            {eventsWorked.map((event) => (
-              <div key={event.id} className="bg-card p-4 rounded-lg shadow-md flex justify-between items-center">
-                <p className="font-medium">{t(event.nameBn, event.nameEn)}</p>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleDownload(t(event.nameBn, event.nameEn))}
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  {t("সার্টিফিকেট ডাউনলোড", "Download Certificate")}
-                </Button>
-              </div>
-            ))}
-          </div>
+          
+          {eventsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin mr-2" />
+              <span className="text-muted-foreground">{t('লোড হচ্ছে…', 'Loading…')}</span>
+            </div>
+          ) : finishedEvents && finishedEvents.length > 0 ? (
+            <div className="space-y-4">
+              {finishedEvents.map((finishedEvent) => (
+                <div key={finishedEvent.participation.id} className="bg-card p-6 rounded-lg shadow-md border">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-start gap-4">
+                        <img 
+                          src={finishedEvent.event.imageUrl} 
+                          alt={finishedEvent.event.titleEn}
+                          className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                        />
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-card-foreground mb-2">
+                            {t(finishedEvent.event.titleBn, finishedEvent.event.titleEn)}
+                          </h3>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              <span>{formatDate(finishedEvent.event.date)}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4" />
+                              <span>{finishedEvent.event.location}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Award className="w-4 h-4" />
+                              <span>{getParticipationTypeText(finishedEvent.participation.participationType)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      {finishedEvent.participation.certificateGenerated ? (
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => handleDownloadCertificate(
+                            finishedEvent.participation.id, 
+                            finishedEvent.event.titleEn
+                          )}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          {t("সার্টিফিকেট ডাউনলোড", "Download Certificate")}
+                        </Button>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleGenerateCertificate(finishedEvent.participation.id)}
+                          disabled={generateCertificateMutation.isPending}
+                        >
+                          {generateCertificateMutation.isPending ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              {t("জেনারেট হচ্ছে...", "Generating...")}
+                            </>
+                          ) : (
+                            <>
+                              <Clock className="w-4 h-4 mr-2" />
+                              {t("সার্টিফিকেট তৈরি করুন", "Generate Certificate")}
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Award className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg">{t("কোনো সম্পন্ন ইভেন্ট নেই", "No finished events yet")}</p>
+              <p className="text-sm">{t("ইভেন্টে অংশগ্রহণ করুন এবং সার্টিফিকেট পান", "Participate in events to earn certificates")}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

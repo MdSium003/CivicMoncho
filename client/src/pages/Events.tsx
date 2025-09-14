@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Calendar, MapPin, Users, HandHeart, ThumbsUp, Trash2 } from "lucide-react";
+import { Calendar, MapPin, Users, HandHeart, ThumbsUp, Trash2, Clock } from "lucide-react";
 import EventDetailsModal from "@/components/EventDetailsModal";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -19,8 +19,15 @@ interface EventCardProps {
   onDelete?: (eventId: string) => void;
 }
 
+// Helper function to check if an event is finished (past today's date)
+function isEventFinished(eventDate: string): boolean {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  return eventDate < today;
+}
+
 function EventCard({ event, index, onOpenModal, isGovernmental = false, onDelete }: EventCardProps) {
   const { t, language } = useLanguage();
+  const isFinished = isEventFinished(event.date);
 
   const getCategoryColor = (category: string) => {
     switch (category.toLowerCase()) {
@@ -65,20 +72,32 @@ function EventCard({ event, index, onOpenModal, isGovernmental = false, onDelete
       />
       <div className="p-6">
         <div className="flex items-center justify-between mb-3">
-          <Badge 
-            className={getCategoryColor(event.category)}
-            data-testid={`event-category-${event.id}`}
-          >
-            {t(
-              event.category === "Environment" ? "পরিবেশ" : 
-              event.category === "Community Service" ? "সমাজসেবা" : 
-              event.category === "Education" ? "শিক্ষা" : 
-              event.category === "Healthcare" ? "স্বাস্থ্য" :
-              event.category === "Technology" ? "প্রযুক্তি" :
-              event.category === "Agriculture" ? "কৃষি" : event.category,
-              event.category
+          <div className="flex items-center gap-2">
+            <Badge 
+              className={getCategoryColor(event.category)}
+              data-testid={`event-category-${event.id}`}
+            >
+              {t(
+                event.category === "Environment" ? "পরিবেশ" : 
+                event.category === "Community Service" ? "সমাজসেবা" : 
+                event.category === "Education" ? "শিক্ষা" : 
+                event.category === "Healthcare" ? "স্বাস্থ্য" :
+                event.category === "Technology" ? "প্রযুক্তি" :
+                event.category === "Agriculture" ? "কৃষি" : event.category,
+                event.category
+              )}
+            </Badge>
+            {isFinished && (
+              <Badge 
+                variant="destructive"
+                className="bg-red-100 text-red-800 border-red-200"
+                data-testid={`event-ended-${event.id}`}
+              >
+                <Clock className="w-3 h-3 mr-1" />
+                {t("শেষ", "ENDED")}
+              </Badge>
             )}
-          </Badge>
+          </div>
           {isGovernmental && onDelete && (
             <Button 
               variant="outline"
@@ -127,44 +146,58 @@ function EventCard({ event, index, onOpenModal, isGovernmental = false, onDelete
           </Button>
         </div>
         
-        {/* Interaction Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-primary/5 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center mb-1">
-              <HandHeart className="w-4 h-4 text-primary mr-1" />
+        {/* Event Status */}
+        {isFinished ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+            <div className="flex items-center justify-center mb-2">
+              <Clock className="w-6 h-6 text-red-600 mr-2" />
+              <span className="text-lg font-bold text-red-800">
+                {t("ইভেন্ট শেষ হয়েছে", "EVENT ENDED")}
+              </span>
             </div>
-            <div className="text-lg font-bold text-primary" data-testid={`event-volunteers-${event.id}`}>
-              {formatNumber(event.volunteers)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t("স্বেচ্ছাসেবী", "Volunteers")}
+            <p className="text-sm text-red-600">
+              {t("এই ইভেন্টে আর অংশগ্রহণ করা যাবে না", "Participation is no longer available for this event")}
             </p>
           </div>
-          
-          <div className="bg-secondary/5 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center mb-1">
-              <Users className="w-4 h-4 text-secondary mr-1" />
+        ) : (
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-primary/5 rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center mb-1">
+                <HandHeart className="w-4 h-4 text-primary mr-1" />
+              </div>
+              <div className="text-lg font-bold text-primary" data-testid={`event-volunteers-${event.id}`}>
+                {formatNumber(event.volunteers)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t("স্বেচ্ছাসেবী", "Volunteers")}
+              </p>
             </div>
-            <div className="text-lg font-bold text-secondary" data-testid={`event-going-${event.id}`}>
-              {formatNumber(event.going)}
+            
+            <div className="bg-secondary/5 rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center mb-1">
+                <Users className="w-4 h-4 text-secondary mr-1" />
+              </div>
+              <div className="text-lg font-bold text-secondary" data-testid={`event-going-${event.id}`}>
+                {formatNumber(event.going)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t("যাচ্ছেন", "Going")}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t("যাচ্ছেন", "Going")}
-            </p>
+            
+            <div className="bg-accent/5 rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center mb-1">
+                <ThumbsUp className="w-4 h-4 text-accent mr-1" />
+              </div>
+              <div className="text-lg font-bold text-accent" data-testid={`event-helpful-${event.id}`}>
+                {formatNumber(event.helpful)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t("সহায়ক", "Helpful")}
+              </p>
+            </div>
           </div>
-          
-          <div className="bg-accent/5 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center mb-1">
-              <ThumbsUp className="w-4 h-4 text-accent mr-1" />
-            </div>
-            <div className="text-lg font-bold text-accent" data-testid={`event-helpful-${event.id}`}>
-              {formatNumber(event.helpful)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t("সহায়ক", "Helpful")}
-            </p>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

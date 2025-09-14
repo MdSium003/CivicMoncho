@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { HandHeart, Users, ThumbsUp, Calendar, MapPin, CheckCircle, XCircle } from "lucide-react";
+import { HandHeart, Users, ThumbsUp, Calendar, MapPin, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,12 @@ interface EventDetailsModalProps {
   onClose: () => void;
 }
 
+// Helper function to check if an event is finished (past today's date)
+function isEventFinished(eventDate: string): boolean {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  return eventDate < today;
+}
+
 export default function EventDetailsModal({ event, isOpen, onClose }: EventDetailsModalProps) {
   const { t, language } = useLanguage();
   const [hasVolunteered, setHasVolunteered] = useState(false);
@@ -23,6 +29,8 @@ export default function EventDetailsModal({ event, isOpen, onClose }: EventDetai
   const [hasMarkedHelpful, setHasMarkedHelpful] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  
+  const isFinished = event ? isEventFinished(event.date) : false;
 
   // Fetch current user's status when modal opens
   useEffect(() => {
@@ -177,77 +185,91 @@ export default function EventDetailsModal({ event, isOpen, onClose }: EventDetai
             />
             
             {/* Action Buttons */}
-            <div className="space-y-3">
-              <Button
-                className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105 ${
-                  hasVolunteered 
-                    ? "bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                    : "bg-primary text-primary-foreground hover:bg-primary/90"
-                }`}
-                onClick={() => volunteerMutation.mutate()}
-                disabled={volunteerMutation.isPending}
-                data-testid="modal-volunteer-button"
-              >
-                {hasVolunteered ? (
-                  <>
-                    <XCircle className="w-5 h-5 mr-2" />
-                    {t("স্বেচ্ছাসেবী বাতিল করুন", "Cancel Volunteer")}
-                  </>
-                ) : (
-                  <>
-                    <HandHeart className="w-5 h-5 mr-2" />
-                    {t("স্বেচ্ছাসেবী হিসেবে নিবন্ধন করুন", "Register as Volunteer")}
-                  </>
-                )}
-              </Button>
+            {isFinished ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                <div className="flex items-center justify-center mb-3">
+                  <Clock className="w-8 h-8 text-red-600 mr-3" />
+                  <span className="text-xl font-bold text-red-800">
+                    {t("ইভেন্ট শেষ হয়েছে", "EVENT ENDED")}
+                  </span>
+                </div>
+                <p className="text-sm text-red-600">
+                  {t("এই ইভেন্টে আর অংশগ্রহণ করা যাবে না", "Participation is no longer available for this event")}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Button
+                  className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105 ${
+                    hasVolunteered 
+                      ? "bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                      : "bg-primary text-primary-foreground hover:bg-primary/90"
+                  }`}
+                  onClick={() => volunteerMutation.mutate()}
+                  disabled={volunteerMutation.isPending}
+                  data-testid="modal-volunteer-button"
+                >
+                  {hasVolunteered ? (
+                    <>
+                      <XCircle className="w-5 h-5 mr-2" />
+                      {t("স্বেচ্ছাসেবী বাতিল করুন", "Cancel Volunteer")}
+                    </>
+                  ) : (
+                    <>
+                      <HandHeart className="w-5 h-5 mr-2" />
+                      {t("স্বেচ্ছাসেবী হিসেবে নিবন্ধন করুন", "Register as Volunteer")}
+                    </>
+                  )}
+                </Button>
 
-              <Button
-                className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105 ${
-                  hasMarkedGoing 
-                    ? "bg-accent text-accent-foreground hover:bg-accent/90"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                }`}
-                onClick={() => goingMutation.mutate()}
-                disabled={goingMutation.isPending}
-                data-testid="modal-going-button"
-              >
-                {hasMarkedGoing ? (
-                  <>
-                    <XCircle className="w-5 h-5 mr-2" />
-                    {t("আমি যাচ্ছি বাতিল", "Cancel Going")}
-                  </>
-                ) : (
-                  <>
-                    <Users className="w-5 h-5 mr-2" />
-                    {t("আমি যাচ্ছি", "I'm Going")}
-                  </>
-                )}
-              </Button>
+                <Button
+                  className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105 ${
+                    hasMarkedGoing 
+                      ? "bg-accent text-accent-foreground hover:bg-accent/90"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                  }`}
+                  onClick={() => goingMutation.mutate()}
+                  disabled={goingMutation.isPending}
+                  data-testid="modal-going-button"
+                >
+                  {hasMarkedGoing ? (
+                    <>
+                      <XCircle className="w-5 h-5 mr-2" />
+                      {t("আমি যাচ্ছি বাতিল", "Cancel Going")}
+                    </>
+                  ) : (
+                    <>
+                      <Users className="w-5 h-5 mr-2" />
+                      {t("আমি যাচ্ছি", "I'm Going")}
+                    </>
+                  )}
+                </Button>
 
-              <Button
-                variant={hasMarkedHelpful ? "default" : "outline"}
-                className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105 ${
-                  hasMarkedHelpful 
-                    ? "bg-muted text-muted-foreground border-muted"
-                    : "border-accent text-accent hover:bg-accent hover:text-accent-foreground"
-                }`}
-                onClick={() => helpfulMutation.mutate()}
-                disabled={helpfulMutation.isPending}
-                data-testid="modal-helpful-button"
-              >
-                {hasMarkedHelpful ? (
-                  <>
-                    <XCircle className="w-5 h-5 mr-2" />
-                    {t("সহায়ক ভোট বাতিল", "Remove Helpful")}
-                  </>
-                ) : (
-                  <>
-                    <ThumbsUp className="w-5 h-5 mr-2" />
-                    {t("সহায়ক", "Helpful")}
-                  </>
-                )}
-              </Button>
-            </div>
+                <Button
+                  variant={hasMarkedHelpful ? "default" : "outline"}
+                  className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-300 hover:scale-105 ${
+                    hasMarkedHelpful 
+                      ? "bg-muted text-muted-foreground border-muted"
+                      : "border-accent text-accent hover:bg-accent hover:text-accent-foreground"
+                  }`}
+                  onClick={() => helpfulMutation.mutate()}
+                  disabled={helpfulMutation.isPending}
+                  data-testid="modal-helpful-button"
+                >
+                  {hasMarkedHelpful ? (
+                    <>
+                      <XCircle className="w-5 h-5 mr-2" />
+                      {t("সহায়ক ভোট বাতিল", "Remove Helpful")}
+                    </>
+                  ) : (
+                    <>
+                      <ThumbsUp className="w-5 h-5 mr-2" />
+                      {t("সহায়ক", "Helpful")}
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Event Details */}

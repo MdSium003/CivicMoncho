@@ -2,8 +2,14 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { threads, threadComments, users, projects as projectsTable, projectVotes, specialProjectVotes, pendingEvents, events as eventsTable, eventVolunteers, eventGoings, eventHelpfulVotes, notifications, notificationReads, aboutUs, contactInfo } from "@shared/schema";
-import { desc, eq, inArray, sql as dsql, and } from "drizzle-orm";
+import { threads, threadComments, users, projects as projectsTable, projectVotes, specialProjectVotes, pendingEvents, events as eventsTable, eventVolunteers, eventGoings, eventHelpfulVotes, notifications, notificationReads, aboutUs, contactInfo, eventParticipation } from "@shared/schema";
+import { desc, eq, inArray, sql as dsql, and, lt } from "drizzle-orm";
+
+// Helper function to check if an event is finished (past today's date)
+function isEventFinished(eventDate: string): boolean {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  return eventDate < today;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all projects
@@ -267,6 +273,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const user = req.user as any;
     try {
       const { id } = req.params;
+      
+      // Check if event exists and get its date
+      const event = await db.select().from(eventsTable).where(eq(eventsTable.id, id)).limit(1);
+      if (!event[0]) return res.status(404).json({ message: "Event not found" });
+      
+      // Check if event is finished
+      if (isEventFinished(event[0].date)) {
+        return res.status(400).json({ message: "This event has ended. Participation is no longer available." });
+      }
+      
       const existing = await db
         .select({ id: eventVolunteers.id })
         .from(eventVolunteers)
@@ -274,6 +290,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .limit(1);
       if (existing[0]) return res.status(409).json({ message: "Already volunteered" });
       await db.insert(eventVolunteers).values({ eventId: id, userId: user.id });
+      await db.insert(eventParticipation).values({ 
+        eventId: id, 
+        userId: user.id, 
+        participationType: 'volunteer' 
+      });
       const updated = await db
         .update(eventsTable)
         .set({ volunteers: dsql`${eventsTable.volunteers} + 1` as unknown as number })
@@ -315,6 +336,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const user = req.user as any;
     try {
       const { id } = req.params;
+      
+      // Check if event exists and get its date
+      const event = await db.select().from(eventsTable).where(eq(eventsTable.id, id)).limit(1);
+      if (!event[0]) return res.status(404).json({ message: "Event not found" });
+      
+      // Check if event is finished
+      if (isEventFinished(event[0].date)) {
+        return res.status(400).json({ message: "This event has ended. Participation is no longer available." });
+      }
+      
       const existing = await db
         .select({ id: eventGoings.id })
         .from(eventGoings)
@@ -322,6 +353,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .limit(1);
       if (existing[0]) return res.status(409).json({ message: "Already marked going" });
       await db.insert(eventGoings).values({ eventId: id, userId: user.id });
+      await db.insert(eventParticipation).values({ 
+        eventId: id, 
+        userId: user.id, 
+        participationType: 'going' 
+      });
       const updated = await db
         .update(eventsTable)
         .set({ going: dsql`${eventsTable.going} + 1` as unknown as number })
@@ -1032,6 +1068,223 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (e) {
       res.status(500).json({ message: "Failed to update contact info" });
+    }
+  });
+
+  // Get user's finished events (events that are past today's date)
+  app.get("/api/user/finished-events", async (req, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    // @ts-ignore
+    const user = req.user as any;
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      
+      // Get events where user participated and event date is before today
+      const finishedEvents = await db
+        .select({
+          event: eventsTable,
+          participation: eventParticipation,
+        })
+        .from(eventsTable)
+        .innerJoin(eventParticipation, eq(eventsTable.id, eventParticipation.eventId))
+        .where(
+          and(
+            eq(eventParticipation.userId, user.id),
+            lt(eventsTable.date, today)
+          )
+        )
+        .orderBy(desc(eventsTable.date));
+
+      res.json(finishedEvents);
+    } catch (e) {
+      console.error("Error fetching finished events:", e);
+      res.status(500).json({ message: "Failed to fetch finished events" });
+    }
+  });
+
+  // Generate certificate for a specific event participation
+  app.post("/api/user/generate-certificate/:participationId", async (req, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    // @ts-ignore
+    const user = req.user as any;
+    try {
+      const { participationId } = req.params;
+
+      // Get participation details
+      const participation = await db
+        .select({
+          participation: eventParticipation,
+          event: eventsTable,
+          user: users,
+        })
+        .from(eventParticipation)
+        .innerJoin(eventsTable, eq(eventParticipation.eventId, eventsTable.id))
+        .innerJoin(users, eq(eventParticipation.userId, users.id))
+        .where(eq(eventParticipation.id, participationId))
+        .limit(1);
+
+      if (!participation.length) {
+        return res.status(404).json({ message: "Participation not found" });
+      }
+
+      const { participation: part, event, user: participantUser } = participation[0];
+
+      // Check if user owns this participation
+      if (part.userId !== user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Check if certificate already generated
+      if (part.certificateGenerated) {
+        return res.json({ 
+          message: "Certificate already generated",
+          certificateUrl: part.certificateUrl 
+        });
+      }
+
+      // Generate certificate URL (in a real app, this would generate an actual certificate)
+      const certificateUrl = `/api/certificates/${participationId}.pdf`;
+
+      // Update participation with certificate info
+      await db
+        .update(eventParticipation)
+        .set({
+          certificateGenerated: 1,
+          certificateUrl: certificateUrl,
+        })
+        .where(eq(eventParticipation.id, participationId));
+
+      res.json({ 
+        message: "Certificate generated successfully",
+        certificateUrl: certificateUrl 
+      });
+    } catch (e) {
+      console.error("Error generating certificate:", e);
+      res.status(500).json({ message: "Failed to generate certificate" });
+    }
+  });
+
+  // Download certificate
+  app.get("/api/certificates/:participationId.pdf", async (req, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) return res.status(401).json({ message: "Unauthorized" });
+    // @ts-ignore
+    const user = req.user as any;
+    try {
+      const { participationId } = req.params;
+
+      // Get participation details
+      const participation = await db
+        .select({
+          participation: eventParticipation,
+          event: eventsTable,
+          user: users,
+        })
+        .from(eventParticipation)
+        .innerJoin(eventsTable, eq(eventParticipation.eventId, eventsTable.id))
+        .innerJoin(users, eq(eventParticipation.userId, users.id))
+        .where(eq(eventParticipation.id, participationId))
+        .limit(1);
+
+      if (!participation.length) {
+        return res.status(404).json({ message: "Participation not found" });
+      }
+
+      const { participation: part, event, user: participantUser } = participation[0];
+
+      // Check if user owns this participation
+      if (part.userId !== user.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Check if certificate is generated
+      if (!part.certificateGenerated) {
+        return res.status(404).json({ message: "Certificate not generated" });
+      }
+
+      // For now, return a simple PDF response (in a real app, generate actual certificate)
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="certificate-${event.titleEn.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf"`);
+      
+      // Simple PDF content (in a real app, use a PDF library like puppeteer or pdfkit)
+      const pdfContent = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+>>
+endobj
+
+4 0 obj
+<<
+/Length 200
+>>
+stream
+BT
+/F1 24 Tf
+100 700 Td
+(Certificate of Participation) Tj
+0 -50 Td
+/F1 18 Tf
+(This is to certify that) Tj
+0 -30 Td
+/F1 20 Tf
+(${participantUser.firstName} ${participantUser.lastName}) Tj
+0 -30 Td
+/F1 16 Tf
+(has successfully participated in) Tj
+0 -30 Td
+/F1 18 Tf
+(${event.titleEn}) Tj
+0 -30 Td
+/F1 14 Tf
+(Event Date: ${event.date}) Tj
+0 -30 Td
+/F1 14 Tf
+(Location: ${event.location}) Tj
+0 -50 Td
+/F1 16 Tf
+(Thank you for your contribution!) Tj
+ET
+endstream
+endobj
+
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000204 00000 n 
+trailer
+<<
+/Size 5
+/Root 1 0 R
+>>
+startxref
+454
+%%EOF`;
+
+      res.send(Buffer.from(pdfContent));
+    } catch (e) {
+      console.error("Error downloading certificate:", e);
+      res.status(500).json({ message: "Failed to download certificate" });
     }
   });
 
