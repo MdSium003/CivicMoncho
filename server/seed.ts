@@ -1,5 +1,5 @@
-import { db } from "./db";
-import { projects, polls, events } from "@shared/schema";
+import { db } from "./db.js";
+import { projects, polls, events } from "./schema.js";
 import { eq } from "drizzle-orm";
 
 async function main() {

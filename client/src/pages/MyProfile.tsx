@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from "../contexts/LanguageContext";
 import { Download, User, MapPin, Mail, Phone, Award, Calendar, Clock, Loader2 } from 'lucide-react';
+import { apiGet, apiPost } from '@/lib/api';
 
 // --- ADDED: Self-contained Button component to resolve import error ---
 const Button = ({ children, className, variant, size, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'outline' | 'ghost' | 'default', size?: 'sm' | 'icon' | 'default' }) => {
@@ -95,12 +96,7 @@ export default function MyProfile() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (res.status === 401) {
-          navigate('/login');
-          return;
-        }
-        const data = await res.json();
+        const data = await apiGet<SessionUser>('/api/auth/me');
         if (!cancelled) setUser(data);
       } catch {
         navigate('/login');
@@ -130,14 +126,7 @@ export default function MyProfile() {
   // Generate certificate mutation
   const generateCertificateMutation = useMutation({
     mutationFn: async (participationId: string) => {
-      const response = await fetch(`/api/user/generate-certificate/${participationId}`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to generate certificate');
-      }
-      return response.json();
+      return await apiPost(`/api/user/generate-certificate/${participationId}`);
     },
     onSuccess: () => {
       // Refetch finished events to get updated certificate status

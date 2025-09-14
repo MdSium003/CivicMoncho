@@ -1,6 +1,6 @@
-import { type User, type InsertUser, type Project, type InsertProject, type Poll, type InsertPoll, type Event, type InsertEvent } from "@shared/schema";
-import { db } from "./db";
-import { users, projects as projectsTable, polls as pollsTable, events as eventsTable } from "@shared/schema";
+import { type User, type InsertUser, type Project, type InsertProject, type Poll, type InsertPoll, type Event, type InsertEvent } from "./schema.js";
+import { db } from "./db.js";
+import { users, projects as projectsTable, polls as pollsTable, events as eventsTable } from "./schema.js";
 import { eq, desc, sql as dsql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
@@ -194,6 +194,7 @@ export class MemStorage implements IStorage {
         volunteers: 150,
         going: 1200,
         helpful: 850,
+        proposerId: null,
         createdAt: new Date(),
       },
       {
@@ -209,6 +210,7 @@ export class MemStorage implements IStorage {
         volunteers: 80,
         going: 950,
         helpful: 600,
+        proposerId: null,
         createdAt: new Date(),
       },
       {
@@ -224,6 +226,7 @@ export class MemStorage implements IStorage {
         volunteers: 500,
         going: 2500,
         helpful: 1800,
+        proposerId: null,
         createdAt: new Date(),
       },
       {
@@ -239,6 +242,7 @@ export class MemStorage implements IStorage {
         volunteers: 200,
         going: 5000,
         helpful: 3500,
+        proposerId: null,
         createdAt: new Date(),
       },
       {
@@ -254,6 +258,7 @@ export class MemStorage implements IStorage {
         volunteers: 100,
         going: 3000,
         helpful: 2200,
+        proposerId: null,
         createdAt: new Date(),
       },
       {
@@ -269,6 +274,7 @@ export class MemStorage implements IStorage {
         volunteers: 300,
         going: 6000,
         helpful: 4500,
+        proposerId: null,
         createdAt: new Date(),
       },
       {
@@ -284,6 +290,7 @@ export class MemStorage implements IStorage {
         volunteers: 120,
         going: 4000,
         helpful: 2800,
+        proposerId: null,
         createdAt: new Date(),
       },
     ];
@@ -303,7 +310,12 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
+    const user: User = { 
+      ...insertUser, 
+      id,
+      role: insertUser.role || "citizen",
+      floor: insertUser.floor || null
+    };
     this.users.set(id, user);
     return user;
   }

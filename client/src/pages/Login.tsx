@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LogIn } from 'lucide-react';
+import { apiPost } from '@/lib/api';
 
 export default function Login() {
   const { t } = useLanguage();
@@ -21,16 +22,7 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ username: email, password, role })
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Login failed');
-      }
+      await apiPost('/api/auth/login', { username: email, password, role });
       window.dispatchEvent(new Event('auth:changed'));
       setLocation('/myprofile');
     } catch (err: any) {

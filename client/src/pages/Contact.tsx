@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, Mail, Globe, Clock, Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { apiPost } from "@/lib/api";
 
 export default function Contact() {
   const { t, language } = useLanguage();
@@ -58,20 +59,7 @@ export default function Contact() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/contact/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit form');
-      }
-      
-      const result = await response.json();
+      await apiPost('/api/contact/submit', formData);
       
       toast({
         title: t('বার্তা পাঠানো হয়েছে', 'Message Sent'),

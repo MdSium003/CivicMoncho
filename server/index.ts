@@ -1,11 +1,19 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { registerRoutes } from "./routes.js";
 import session from "express-session";
 import memorystore from "memorystore";
-import { registerAuthRoutes } from "./auth";
+import { registerAuthRoutes } from "./auth.js";
+import cors from "cors";
 
 const app = express();
+
+// Enable CORS for cross-origin requests from client
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -49,7 +57,7 @@ app.use((req, res, next) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      console.log(logLine);
     }
   });
 
@@ -68,22 +76,17 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  // Health check endpoint
+  app.get("/health", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
+  // API-only server - no static file serving
   const port = parseInt(process.env.PORT || '5000', 10);
   const host = process.env.NODE_ENV === 'production' ? "0.0.0.0" : "127.0.0.1";
+  
   server.listen(port, host, () => {
-    log(`serving on http://${host}:${port}`);
+    console.log(`🚀 API Server running on http://${host}:${port}`);
+    console.log(`📊 Health check: http://${host}:${port}/health`);
   });
 })();

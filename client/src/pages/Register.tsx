@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiPost } from '@/lib/api';
 
 export default function Register() {
   const { t } = useLanguage();
@@ -48,31 +49,23 @@ export default function Register() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          role: formData.role,
-          username: formData.email,
-          password: formData.password,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          idType: formData.idType,
-          idNumber: formData.idNumber,
-          building: formData.building,
-          floor: formData.floor,
-          street: formData.street,
-          thana: formData.thana,
-          city: formData.city,
-          postalCode: formData.postalCode,
-          country: formData.country,
-          mobile: formData.mobile,
-        })
+      await apiPost('/api/auth/register', {
+        role: formData.role,
+        username: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        idType: formData.idType,
+        idNumber: formData.idNumber,
+        building: formData.building,
+        floor: formData.floor,
+        street: formData.street,
+        thana: formData.thana,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        country: formData.country,
+        mobile: formData.mobile,
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Registration failed');
-      }
       toast({
         title: t('রেজিস্ট্রেশন জমা হয়েছে', 'Registration submitted'),
         description: t('আপনার রেজিস্ট্রেশন জমা হয়েছে। ৭২ ঘন্টার মধ্যে অনুমোদন সম্পন্ন হবে।', 'Your registration has been submitted. Approval will be completed within 72 hours.'),

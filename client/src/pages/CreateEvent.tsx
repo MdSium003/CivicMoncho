@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
+import { apiGet, apiPost } from '@/lib/api';
 
 export default function CreateEvent() {
   const { t } = useLanguage();
@@ -33,13 +34,7 @@ export default function CreateEvent() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (!res.ok) {
-          if (!cancelled) {
-            toast({ title: t('লগইন প্রয়োজন', 'Login required'), description: t('ইভেন্ট প্রস্তাব করতে লগইন করুন।', 'Please log in to propose an event.') });
-            setLocation('/login');
-          }
-        }
+        await apiGet('/api/auth/me');
       } catch {
         if (!cancelled) {
           toast({ title: t('লগইন প্রয়োজন', 'Login required'), description: t('ইভেন্ট প্রস্তাব করতে লগইন করুন।', 'Please log in to propose an event.') });
@@ -64,26 +59,17 @@ export default function CreateEvent() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch('/api/events/propose', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          titleEn: formData.titleEn,
-          titleBn: formData.titleBn,
-          descriptionEn: formData.descriptionEn,
-          descriptionBn: formData.descriptionBn,
-          category: formData.category,
-          date: formData.date,
-          location: formData.location,
-          imageUrl: formData.imageUrl,
-          volunteersNeeded: formData.volunteersNeeded,
-        })
+      await apiPost('/api/events/propose', {
+        titleEn: formData.titleEn,
+        titleBn: formData.titleBn,
+        descriptionEn: formData.descriptionEn,
+        descriptionBn: formData.descriptionBn,
+        category: formData.category,
+        date: formData.date,
+        location: formData.location,
+        imageUrl: formData.imageUrl,
+        volunteersNeeded: formData.volunteersNeeded,
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Failed to submit event');
-      }
       toast({
         title: t('ইভেন্ট জমা হয়েছে', 'Event submitted'),
         description: t('আপনার ইভেন্টটি অনুমোদনের অপেক্ষায় আছে।', 'Your event is pending approval.'),

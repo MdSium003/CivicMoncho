@@ -1,10 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { db } from "./db";
-import { threads, threadComments, users, projects as projectsTable, projectVotes, specialProjectVotes, pendingEvents, events as eventsTable, eventVolunteers, eventGoings, eventHelpfulVotes, notifications, notificationReads, aboutUs, contactInfo, eventParticipation, contactSubmissions } from "@shared/schema";
+import { storage } from "./storage.js";
+import { db } from "./db.js";
+import { threads, threadComments, users, projects as projectsTable, projectVotes, specialProjectVotes, pendingEvents, events as eventsTable, eventVolunteers, eventGoings, eventHelpfulVotes, notifications, notificationReads, aboutUs, contactInfo, eventParticipation, contactSubmissions } from "./schema.js";
 import { desc, eq, inArray, sql as dsql, and, lt } from "drizzle-orm";
-import { generateCertificate, generateCertificateBengali } from "./certificateGenerator";
+import { generateCertificate, generateCertificateBengali } from "./certificateGenerator.js";
 
 // Helper function to check if an event is finished (past today's date)
 function isEventFinished(eventDate: string): boolean {

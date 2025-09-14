@@ -2,8 +2,8 @@ import type { Express, Request, Response, NextFunction } from "express";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import crypto from "crypto";
-import { db } from "./db";
-import { users, pendingApprovals } from "@shared/schema";
+import { db } from "./db.js";
+import { users, pendingApprovals } from "./schema.js";
 import { eq } from "drizzle-orm";
 
 type PassportUser = { id: string; username: string; role: 'citizen' | 'governmental' };

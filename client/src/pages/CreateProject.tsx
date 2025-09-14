@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
+import { apiPost } from '@/lib/api';
 
 export default function CreateProject() {
   const { t } = useLanguage();
@@ -47,25 +48,16 @@ export default function CreateProject() {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          titleEn: formData.titleEn,
-          titleBn: formData.titleBn,
-          descriptionEn: formData.descriptionEn,
-          descriptionBn: formData.descriptionBn,
-          category: formData.category,
-          status: formData.status,
-          budget: formData.budget,
-          imageUrl: formData.imageUrl,
-        })
+      await apiPost('/api/projects', {
+        titleEn: formData.titleEn,
+        titleBn: formData.titleBn,
+        descriptionEn: formData.descriptionEn,
+        descriptionBn: formData.descriptionBn,
+        category: formData.category,
+        status: formData.status,
+        budget: formData.budget,
+        imageUrl: formData.imageUrl,
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Failed to create project');
-      }
       toast({
         title: t('প্রকল্প জমা হয়েছে', 'Project submitted'),
         description: t('নতুন প্রকল্পটি তালিকায় যুক্ত হয়েছে।', 'The new project has been added to the list.'),
