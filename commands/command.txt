@@ -1,0 +1,4 @@
+npm install
+npm install --save-dev cross-env
+npm run dev
+http://127.0.0.1:5000/projects/create
