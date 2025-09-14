@@ -1,21 +1,25 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Event } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, MapPin, Users, HandHeart, ThumbsUp } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Calendar, MapPin, Users, HandHeart, ThumbsUp, Trash2 } from "lucide-react";
 import EventDetailsModal from "@/components/EventDetailsModal";
 import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 interface EventCardProps {
   event: Event;
   index: number;
   onOpenModal: (event: Event) => void;
+  isGovernmental?: boolean;
+  onDelete?: (eventId: string) => void;
 }
 
-function EventCard({ event, index, onOpenModal }: EventCardProps) {
+function EventCard({ event, index, onOpenModal, isGovernmental = false, onDelete }: EventCardProps) {
   const { t, language } = useLanguage();
 
   const getCategoryColor = (category: string) => {
@@ -75,6 +79,19 @@ function EventCard({ event, index, onOpenModal }: EventCardProps) {
               event.category
             )}
           </Badge>
+          {isGovernmental && onDelete && (
+            <Button 
+              variant="outline"
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                onDelete(event.id); 
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
         
         <h3 className="text-xl font-bold mb-2 text-card-foreground" data-testid={`event-title-${event.id}`}>
@@ -160,6 +177,10 @@ export default function Events() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isGovernmental, setIsGovernmental] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<string | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let cancelled = false;
@@ -201,6 +222,38 @@ export default function Events() {
   const { data: events, isLoading } = useQuery<Event[]>({
     queryKey: ["/api/events"],
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (eventId: string) => {
+      const res = await fetch(`/api/events/${eventId}`, { method: 'DELETE', credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to delete');
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: t('ইভেন্ট মুছে ফেলা হয়েছে', 'Event deleted') });
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      setConfirmOpen(false);
+      setEventToDelete(null);
+    },
+    onError: (err: any) => {
+      toast({ 
+        title: t('ত্রুটি', 'Error'), 
+        description: err.message || t('মুছে ফেলতে ব্যর্থ', 'Failed to delete'), 
+        variant: 'destructive' 
+      });
+    }
+  });
+
+  const handleDeleteEvent = (eventId: string) => {
+    setEventToDelete(eventId);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (eventToDelete) {
+      deleteMutation.mutate(eventToDelete);
+    }
+  };
 
   const categories = ["All", "Environment", "Community Service", "Education", "Healthcare", "Technology", "Agriculture"];
 
@@ -300,7 +353,14 @@ export default function Events() {
             ))
           ) : (
             filteredEvents?.map((event, index) => (
-              <EventCard key={event.id} event={event} index={index} onOpenModal={handleOpenModal} />
+              <EventCard 
+                key={event.id} 
+                event={event} 
+                index={index} 
+                onOpenModal={handleOpenModal}
+                isGovernmental={isGovernmental}
+                onDelete={handleDeleteEvent}
+              />
             ))
           )}
         </div>
@@ -342,6 +402,34 @@ export default function Events() {
           isOpen={isModalOpen}
           onClose={handleCloseModal}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('ইভেন্ট মুছে ফেলুন', 'Delete Event')}</DialogTitle>
+            </DialogHeader>
+            <p className="text-muted-foreground">
+              {t('আপনি কি নিশ্চিত যে আপনি এই ইভেন্টটি মুছে ফেলতে চান?', 'Are you sure you want to delete this event?')}
+            </p>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setConfirmOpen(false)}
+                disabled={deleteMutation.isPending}
+              >
+                {t('বাতিল', 'Cancel')}
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={confirmDelete}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? t('মুছে ফেলছেন...', 'Deleting...') : t('মুছে ফেলুন', 'Delete')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );

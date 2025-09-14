@@ -70,13 +70,15 @@ export default function Home() {
                 "Your voice matters in shaping our community's future"
               )}
             </p>
-            <Button 
-              size="lg" 
-              className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-4 text-lg font-semibold transition-all hover:scale-105 animate-bounce-gentle"
-              data-testid="hero-cta-button"
-            >
-              {t("প্রকল্প দেখুন", "Explore Projects")}
-            </Button>
+            <Link href="/projects">
+              <Button 
+                size="lg" 
+                className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-4 text-lg font-semibold transition-all hover:scale-105 animate-bounce-gentle"
+                data-testid="hero-cta-button"
+              >
+                {t("প্রকল্প দেখুন", "Explore Projects")}
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -353,13 +355,15 @@ export default function Home() {
               "Your participation makes democracy stronger. Sign up today to have your voice heard."
             )}
           </p>
-          <Button 
-            size="lg"
-            className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-4 text-lg font-semibold transition-all hover:scale-105"
-            data-testid="cta-button"
-          >
-            {t("শুরু করুন", "Get Started")} →
-          </Button>
+          <Link href="/login">
+            <Button 
+              size="lg"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 py-4 text-lg font-semibold transition-all hover:scale-105"
+              data-testid="cta-button"
+            >
+              {t("শুরু করুন", "Get Started")} →
+            </Button>
+          </Link>
         </div>
       </section>
     </main>

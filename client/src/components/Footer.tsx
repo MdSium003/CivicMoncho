@@ -1,21 +1,20 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Footer() {
   const { t } = useLanguage();
 
   const quickLinks = [
-    { labelBn: "আমাদের সম্পর্কে", labelEn: "About Us" },
-    { labelBn: "গোপনীয়তা নীতি", labelEn: "Privacy Policy" },
-    { labelBn: "সেবার শর্তাবলী", labelEn: "Terms of Service" },
-    { labelBn: "যোগাযোগ", labelEn: "Contact" },
+    { href: "/about", labelBn: "আমাদের সম্পর্কে", labelEn: "About Us" },
+    { href: "/projects", labelBn: "প্রকল্প", labelEn: "Projects" },
+    { href: "/events", labelBn: "ইভেন্ট", labelEn: "Events" },
+    { href: "/contact", labelBn: "যোগাযোগ", labelEn: "Contact" },
   ];
 
   const supportLinks = [
-    { labelBn: "সহায়তা কেন্দ্র", labelEn: "Help Center" },
-    { labelBn: "প্রশ্নোত্তর", labelEn: "FAQ" },
-    { labelBn: "কমিউনিটি গাইডলাইন", labelEn: "Community Guidelines" },
-    { labelBn: "সমস্যা রিপোর্ট করুন", labelEn: "Report Issue" },
+    { href: "/service-locator", labelBn: "পরিষেবা কেন্দ্র", labelEn: "Service Locator" },
+    { href: "/info", labelBn: "তথ্য কেন্দ্র", labelEn: "Information Desk" },
   ];
 
   return (
@@ -73,13 +72,13 @@ export default function Footer() {
             <ul className="space-y-2">
               {quickLinks.map((link, index) => (
                 <li key={index}>
-                  <a 
-                    href="#" 
+                  <Link 
+                    href={link.href}
                     className="text-muted-foreground hover:text-primary transition-colors"
                     data-testid={`quick-link-${index}`}
                   >
                     {t(link.labelBn, link.labelEn)}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -93,13 +92,13 @@ export default function Footer() {
             <ul className="space-y-2">
               {supportLinks.map((link, index) => (
                 <li key={index}>
-                  <a 
-                    href="#" 
+                  <Link 
+                    href={link.href}
                     className="text-muted-foreground hover:text-primary transition-colors"
                     data-testid={`support-link-${index}`}
                   >
                     {t(link.labelBn, link.labelEn)}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -178,6 +178,38 @@ export const notificationReads = pgTable("notification_reads", {
   readAt: timestamp("read_at").defaultNow(),
 });
 
+export const aboutUs = pgTable("about_us", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  titleBn: text("title_bn").notNull(),
+  titleEn: text("title_en").notNull(),
+  contentBn: text("content_bn").notNull(),
+  contentEn: text("content_en").notNull(),
+  missionBn: text("mission_bn").notNull(),
+  missionEn: text("mission_en").notNull(),
+  visionBn: text("vision_bn").notNull(),
+  visionEn: text("vision_en").notNull(),
+  valuesBn: text("values_bn").notNull(),
+  valuesEn: text("values_en").notNull(),
+  imageUrl: text("image_url").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const contactInfo = pgTable("contact_info", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  titleBn: text("title_bn").notNull(),
+  titleEn: text("title_en").notNull(),
+  addressBn: text("address_bn").notNull(),
+  addressEn: text("address_en").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email").notNull(),
+  website: text("website").notNull(),
+  officeHoursBn: text("office_hours_bn").notNull(),
+  officeHoursEn: text("office_hours_en").notNull(),
+  mapEmbed: text("map_embed"), // Google Maps embed code
+  socialMedia: text("social_media"), // JSON string for social media links
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export const insertPendingApprovalSchema = createInsertSchema(pendingApprovals).omit({ id: true });
 export const insertThreadSchema = createInsertSchema(threads).omit({ id: true, createdAt: true, likes: true, pinned: true });
@@ -210,6 +242,16 @@ export const insertNotificationReadSchema = createInsertSchema(notificationReads
   readAt: true,
 });
 
+export const insertAboutUsSchema = createInsertSchema(aboutUs).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertContactInfoSchema = createInsertSchema(contactInfo).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertPendingApproval = z.infer<typeof insertPendingApprovalSchema>;
@@ -234,3 +276,7 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotificationRead = z.infer<typeof insertNotificationReadSchema>;
 export type NotificationRead = typeof notificationReads.$inferSelect;
+export type InsertAboutUs = z.infer<typeof insertAboutUsSchema>;
+export type AboutUs = typeof aboutUs.$inferSelect;
+export type InsertContactInfo = z.infer<typeof insertContactInfoSchema>;
+export type ContactInfo = typeof contactInfo.$inferSelect;

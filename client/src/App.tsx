@@ -13,6 +13,8 @@ import Threads from "@/pages/Threads";
 import Login from "@/pages/Login"; // Import Login page
 import Register from "@/pages/Register"; // Import Register page
 import Info from "@/pages/Info";
+import About from "@/pages/About";
+import Contact from "@/pages/Contact";
 import CreateProject from "./pages/CreateProject"; // Import the new page
 import CreateEvent from "./pages/CreateEvent";
 import Service from "./pages/ServiceLocator";
@@ -31,6 +33,8 @@ function Router() {
       <Route path="/login" component={Login} /> {/* Add Login route */}
       <Route path="/register" component={Register} /> {/* Add Register route */}
       <Route path="/info" component={Info} /> {/* Add Info route */}
+      <Route path="/about" component={About} /> {/* Add About route */}
+      <Route path="/contact" component={Contact} /> {/* Add Contact route */}
       <Route path="/projects/create" component={CreateProject} /> {/* Add new route */}
       <Route path="/events/create" component={CreateEvent} /> {/* Add new route */}
       <Route path="/events/pending" component={PendingEvents} /> {/* Add new route */}

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import { threads, threadComments, users, projects as projectsTable, projectVotes, specialProjectVotes, pendingEvents, events as eventsTable, eventVolunteers, eventGoings, eventHelpfulVotes, notifications, notificationReads } from "@shared/schema";
+import { threads, threadComments, users, projects as projectsTable, projectVotes, specialProjectVotes, pendingEvents, events as eventsTable, eventVolunteers, eventGoings, eventHelpfulVotes, notifications, notificationReads, aboutUs, contactInfo } from "@shared/schema";
 import { desc, eq, inArray, sql as dsql, and } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -499,6 +499,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete an event (governmental only)
+  app.delete("/api/events/:id", async (req, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    // @ts-ignore
+    const user = req.user as any;
+    if (user.role !== 'governmental') {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    try {
+      const { id } = req.params;
+      await db.delete(eventsTable).where(eq(eventsTable.id, id));
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
   // Threads API
   app.get("/api/threads", async (_req, res) => {
     try {
@@ -867,6 +886,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Notification deactivated" });
     } catch (error) {
       res.status(500).json({ message: "Failed to deactivate notification" });
+    }
+  });
+
+  // About Us API
+  app.get("/api/about", async (_req, res) => {
+    try {
+      const about = await db.select().from(aboutUs).limit(1);
+      res.json(about[0] || null);
+    } catch (e) {
+      res.status(500).json({ message: "Failed to fetch about us" });
+    }
+  });
+
+  // Update About Us (governmental only)
+  app.put("/api/about", async (req, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    // @ts-ignore
+    const user = req.user as any;
+    if (user.role !== 'governmental') {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    try {
+      const body = req.body as any;
+      const required = ["titleEn", "titleBn", "contentEn", "contentBn", "missionEn", "missionBn", "visionEn", "visionBn", "valuesEn", "valuesBn", "imageUrl"];
+      if (required.some((k) => !body?.[k])) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+      
+      // Check if about us exists
+      const existing = await db.select().from(aboutUs).limit(1);
+      
+      if (existing.length > 0) {
+        // Update existing
+        const updated = await db
+          .update(aboutUs)
+          .set({
+            titleEn: body.titleEn,
+            titleBn: body.titleBn,
+            contentEn: body.contentEn,
+            contentBn: body.contentBn,
+            missionEn: body.missionEn,
+            missionBn: body.missionBn,
+            visionEn: body.visionEn,
+            visionBn: body.visionBn,
+            valuesEn: body.valuesEn,
+            valuesBn: body.valuesBn,
+            imageUrl: body.imageUrl,
+            updatedAt: new Date(),
+          })
+          .where(eq(aboutUs.id, existing[0].id))
+          .returning();
+        res.json(updated[0]);
+      } else {
+        // Create new
+        const inserted = await db.insert(aboutUs).values({
+          titleEn: body.titleEn,
+          titleBn: body.titleBn,
+          contentEn: body.contentEn,
+          contentBn: body.contentBn,
+          missionEn: body.missionEn,
+          missionBn: body.missionBn,
+          visionEn: body.visionEn,
+          visionBn: body.visionBn,
+          valuesEn: body.valuesEn,
+          valuesBn: body.valuesBn,
+          imageUrl: body.imageUrl,
+        }).returning();
+        res.json(inserted[0]);
+      }
+    } catch (e) {
+      res.status(500).json({ message: "Failed to update about us" });
+    }
+  });
+
+  // Contact Info API
+  app.get("/api/contact", async (_req, res) => {
+    try {
+      const contact = await db.select().from(contactInfo).limit(1);
+      res.json(contact[0] || null);
+    } catch (e) {
+      res.status(500).json({ message: "Failed to fetch contact info" });
+    }
+  });
+
+  // Update Contact Info (governmental only)
+  app.put("/api/contact", async (req, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    // @ts-ignore
+    const user = req.user as any;
+    if (user.role !== 'governmental') {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    try {
+      const body = req.body as any;
+      const required = ["titleEn", "titleBn", "addressEn", "addressBn", "phone", "email", "website", "officeHoursEn", "officeHoursBn"];
+      if (required.some((k) => !body?.[k])) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+      
+      // Check if contact info exists
+      const existing = await db.select().from(contactInfo).limit(1);
+      
+      if (existing.length > 0) {
+        // Update existing
+        const updated = await db
+          .update(contactInfo)
+          .set({
+            titleEn: body.titleEn,
+            titleBn: body.titleBn,
+            addressEn: body.addressEn,
+            addressBn: body.addressBn,
+            phone: body.phone,
+            email: body.email,
+            website: body.website,
+            officeHoursEn: body.officeHoursEn,
+            officeHoursBn: body.officeHoursBn,
+            mapEmbed: body.mapEmbed || null,
+            socialMedia: body.socialMedia || null,
+            updatedAt: new Date(),
+          })
+          .where(eq(contactInfo.id, existing[0].id))
+          .returning();
+        res.json(updated[0]);
+      } else {
+        // Create new
+        const inserted = await db.insert(contactInfo).values({
+          titleEn: body.titleEn,
+          titleBn: body.titleBn,
+          addressEn: body.addressEn,
+          addressBn: body.addressBn,
+          phone: body.phone,
+          email: body.email,
+          website: body.website,
+          officeHoursEn: body.officeHoursEn,
+          officeHoursBn: body.officeHoursBn,
+          mapEmbed: body.mapEmbed || null,
+          socialMedia: body.socialMedia || null,
+        }).returning();
+        res.json(inserted[0]);
+      }
+    } catch (e) {
+      res.status(500).json({ message: "Failed to update contact info" });
     }
   });
 
