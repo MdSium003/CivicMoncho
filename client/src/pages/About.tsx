@@ -126,18 +126,18 @@ export default function About() {
     {
       name: "Mahdiat Tarannum", 
       role: "CSE, BUET",
-      email: "mahdiat.tarannum@gmail.com",
+      email: "mahdiattarannum@gmail.com",
       avatar: "/mahdiat.jpg",
-      githubUrl: "https://github.com/mahdiat-tarannum",
+      githubUrl: "https://github.com/mahdiat-t",
       facebookUrl: "https://www.facebook.com/mahdiat.tt",
       description: "Mahdiat shapes the product's look and feel, ensuring every interaction is both beautiful and functional."
     },
     {
       name: "Rafsan Jani",
       role: "CSE, BUET", 
-      email: "rafsan.jani@gmail.com",
+      email: "irafsan2020@gmail.com",
       avatar: "/rafsan.jpg",
-      githubUrl: "https://github.com/rafsan-jani",
+      githubUrl: "https://github.com/RJBISLAM",
       facebookUrl: "https://www.facebook.com/rafsanjbi",
       description: "Rafsan defines the product's strategic direction, ensuring it solves real-world problems and achieves commercial success."
     }
