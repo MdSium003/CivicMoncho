@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { apiGet, apiPost, apiPatch } from '@/lib/api';
 
 interface Notification {
   id: string;
@@ -43,16 +44,7 @@ function CreateNotificationForm({ isOpen, onClose }: { isOpen: boolean; onClose:
   });
 
   const createMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch('/api/notifications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(formData)
-      });
-      if (!res.ok) throw new Error('Failed to create notification');
-      return res.json();
-    },
+    mutationFn: async () => apiPost('/api/notifications', formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/notifications/admin'] });
@@ -232,20 +224,18 @@ export default function NotificationBar({ isOpen, onClose }: NotificationBarProp
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
   const [userRole, setUserRole] = useState<'citizen' | 'governmental' | null>(null);
 
-  // Check user role
+  // Check user role whenever the panel is opened (handles logging in after mount)
   useEffect(() => {
     let cancelled = false;
+    if (!isOpen) return;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (res.ok) {
-          const me = await res.json();
-          if (!cancelled) setUserRole(me.role);
-        }
+        const me = await apiGet<any>('/api/auth/me');
+        if (!cancelled) setUserRole(me.role);
       } catch {}
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [isOpen]);
 
   // Fetch notifications based on user role
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
@@ -255,14 +245,7 @@ export default function NotificationBar({ isOpen, onClose }: NotificationBarProp
 
   // Mark notification as read
   const markAsReadMutation = useMutation({
-    mutationFn: async (notificationId: string) => {
-      const res = await fetch(`/api/notifications/${notificationId}/read`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error('Failed to mark as read');
-      return res.json();
-    },
+    mutationFn: async (notificationId: string) => apiPost(`/api/notifications/${notificationId}/read`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
     }
@@ -270,14 +253,7 @@ export default function NotificationBar({ isOpen, onClose }: NotificationBarProp
 
   // Mark all as read
   const markAllAsReadMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch('/api/notifications/read-all', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error('Failed to mark all as read');
-      return res.json();
-    },
+    mutationFn: async () => apiPost('/api/notifications/read-all'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
       toast({
@@ -289,14 +265,7 @@ export default function NotificationBar({ isOpen, onClose }: NotificationBarProp
 
   // Deactivate notification (government only)
   const deactivateMutation = useMutation({
-    mutationFn: async (notificationId: string) => {
-      const res = await fetch(`/api/notifications/${notificationId}/deactivate`, {
-        method: 'PATCH',
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error('Failed to deactivate');
-      return res.json();
-    },
+    mutationFn: async (notificationId: string) => apiPatch(`/api/notifications/${notificationId}/deactivate`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
       queryClient.invalidateQueries({ queryKey: ['/api/notifications/admin'] });

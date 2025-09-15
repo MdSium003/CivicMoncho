@@ -52,6 +52,12 @@ export async function apiPut<T>(url: string, data?: unknown): Promise<T> {
   return res.json();
 }
 
+// Helper for PATCH requests
+export async function apiPatch<T>(url: string, data?: unknown): Promise<T> {
+  const res = await apiRequest('PATCH', url, data);
+  return res.json();
+}
+
 // Helper for DELETE requests
 export async function apiDelete<T>(url: string): Promise<T> {
   const res = await apiRequest('DELETE', url);
