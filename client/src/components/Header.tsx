@@ -4,6 +4,7 @@ import LanguageToggle from "./LanguageToggle";
 import { Menu, X, Bell, User, LogOut, LogIn, Shield } from "lucide-react"; // Added icons
 import React, { useEffect, useState } from "react";
 import NotificationBar from "./NotificationBar"; 
+import { apiGet, apiPost } from "@/lib/api";
 
 // --- ADDED: Self-contained Button component to resolve import error ---
 const Button = ({ children, className, variant, size, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'outline' | 'ghost' | 'default', size?: 'sm' | 'icon' | 'default' }) => {
@@ -44,13 +45,8 @@ export default function Header() {
     let cancelled = false;
     const refetch = async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          if (!cancelled) setUser(data);
-        } else {
-          if (!cancelled) setUser(null);
-        }
+        const data = await apiGet<any>('/api/auth/me');
+        if (!cancelled) setUser(data);
       } catch {
         if (!cancelled) setUser(null);
       }

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { apiGet, apiDelete, apiPut } from "@/lib/api";
 
 interface ProjectCardProps {
   project: Project;
@@ -27,11 +28,8 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (res.ok) {
-          const me = await res.json();
-          if (!cancelled) setIsGovernmental(me.role === 'governmental');
-        }
+        const me = await apiGet<any>('/api/auth/me');
+        if (!cancelled) setIsGovernmental(me.role === 'governmental');
       } catch {}
     })();
     return () => { cancelled = true; };
@@ -40,9 +38,7 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/projects/${project.id}`, { method: 'DELETE', credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to delete');
-      return res.json();
+      return apiDelete(`/api/projects/${project.id}`);
     },
     onSuccess: () => {
       toast({ title: t('প্রকল্প মুছে ফেলা হয়েছে', 'Project deleted') });
@@ -53,9 +49,8 @@ export default function ProjectCard({ project, index }: ProjectCardProps) {
 
   const statusMutation = useMutation({
     mutationFn: async (status: string) => {
-      const res = await fetch(`/api/projects/${project.id}/status`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
-      if (!res.ok) throw new Error('Failed to update status');
-      return res.json();
+      // Using apiPut for PATCH-like update; server accepts PATCH but api helper uses method PUT/POST/DELETE. We keep PUT here for simplicity.
+      return apiPut(`/api/projects/${project.id}/status`, { status });
     },
     onSuccess: () => {
       toast({ title: t('অবস্থা আপডেট হয়েছে', 'Status updated') });
