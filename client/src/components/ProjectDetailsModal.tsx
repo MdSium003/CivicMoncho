@@ -9,6 +9,7 @@ import { ThumbsUp, Calendar, DollarSign, Users, CheckCircle } from "lucide-react
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { apiGet } from "@/lib/api";
 
 interface ProjectDetailsModalProps {
   project: Project | null;
@@ -27,13 +28,8 @@ export default function ProjectDetailsModal({ project, isOpen, onClose }: Projec
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (res.ok) {
-          if (!cancelled) setIsAuthed(true);
-          // naive check by requesting vote presence (optional endpoint missing) – fallback to local state only
-        } else {
-          if (!cancelled) setIsAuthed(false);
-        }
+        await apiGet('/api/auth/me');
+        if (!cancelled) setIsAuthed(true);
       } catch {
         if (!cancelled) setIsAuthed(false);
       }
