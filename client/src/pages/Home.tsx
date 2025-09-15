@@ -99,7 +99,7 @@ export default function Home() {
           </div>
 
           {/* Two Column Grid */}
-          <div className="grid lg:grid-cols-2 gap-8">
+          <div className="grid lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
             {/* Top Projects Column */}
             <div className="space-y-6 flex flex-col">
               <div className="flex items-center justify-between">
@@ -113,60 +113,93 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="space-y-4 flex-1" data-testid="projects-list">
+              <div className="space-y-3 md:space-y-4 flex-1" data-testid="projects-list">
                 {projectsLoading ? (
                   Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="bg-card border border-border rounded-lg p-4 space-y-3">
-                      <div className="flex items-start space-x-4">
-                        <Skeleton className="h-16 w-16 rounded-lg flex-shrink-0" />
+                    <div key={index} className="bg-card border border-border rounded-lg p-3 md:p-4 space-y-2 md:space-y-3">
+                      <div className="flex items-start space-x-3 md:space-x-4">
+                        <Skeleton className="h-12 w-12 md:h-16 md:w-16 rounded-lg flex-shrink-0" />
                         <div className="flex-1 space-y-2">
-                          <Skeleton className="h-4 w-3/4" />
-                          <Skeleton className="h-3 w-full" />
-                          <Skeleton className="h-3 w-1/2" />
+                          <Skeleton className="h-3 md:h-4 w-3/4" />
+                          <Skeleton className="h-2.5 md:h-3 w-full" />
+                          <Skeleton className="h-2.5 md:h-3 w-1/2" />
                         </div>
                       </div>
                     </div>
                   ))
                 ) : (
                   projects?.slice(0, 4).map((project, index) => (
-                    <div 
-                      key={project.id} 
-                      className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow animate-fade-in"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                      data-testid={`project-item-${project.id}`}
-                    >
-                      <div className="flex items-start space-x-4">
-                        <img 
-                          src={project.imageUrl} 
-                          alt={project.titleEn}
-                          className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
-                          data-testid={`project-image-${project.id}`}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-lg font-semibold text-card-foreground truncate" data-testid={`project-title-${project.id}`}>
-                              {project.titleEn}
-                            </h4>
-                            <Badge variant="outline" className="ml-2 flex-shrink-0">
-                              {project.category}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2 line-clamp-2" data-testid={`project-description-${project.id}`}>
-                            {project.descriptionEn}
-                          </p>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">
-                              {t("বাজেট", "Budget")}: {project.budget}
-                            </span>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-primary font-medium">
-                                {formatNumber(project.upvotes || 0)} {t("ভোট", "votes")}
-                              </span>
+                    <>
+                      {/* Mobile-only compact card */}
+                      <div 
+                        key={`${project.id}-mobile`}
+                        className="md:hidden bg-card border border-border rounded-lg p-3 hover:shadow-sm transition-shadow animate-fade-in"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                        data-testid={`project-item-${project.id}-mobile`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={project.imageUrl} 
+                            alt={project.titleEn}
+                            className="h-10 w-10 rounded-md object-cover flex-shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-semibold text-card-foreground truncate">
+                                {project.titleEn}
+                              </h4>
+                              <Badge variant="outline" className="px-1.5 py-0 text-[10px] leading-4">
+                                {project.category}
+                              </Badge>
+                            </div>
+                            <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
+                              <span className="truncate">{t("বাজেট", "Budget")}: {project.budget}</span>
+                              <span className="text-primary font-medium">{formatNumber(project.upvotes || 0)}</span>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+
+                      {/* Desktop/Tablet card */}
+                      <div 
+                        key={project.id}
+                        className="hidden md:block bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow animate-fade-in"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                        data-testid={`project-item-${project.id}`}
+                      >
+                        <div className="flex items-start space-x-4">
+                          <img 
+                            src={project.imageUrl} 
+                            alt={project.titleEn}
+                            className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
+                            data-testid={`project-image-${project.id}`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-lg font-semibold text-card-foreground truncate" data-testid={`project-title-${project.id}`}>
+                                {project.titleEn}
+                              </h4>
+                              <Badge variant="outline" className="ml-2 flex-shrink-0">
+                                {project.category}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2 line-clamp-2" data-testid={`project-description-${project.id}`}>
+                              {project.descriptionEn}
+                            </p>
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">
+                                {t("বাজেট", "Budget")}: {project.budget}
+                              </span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-primary font-medium">
+                                  {formatNumber(project.upvotes || 0)} {t("ভোট", "votes")}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   ))
                 )}
               </div>
@@ -185,87 +218,131 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="space-y-4 flex-1" data-testid="events-list">
+              <div className="space-y-3 md:space-y-4 flex-1" data-testid="events-list">
                 {eventsLoading ? (
                   Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="bg-card border border-border rounded-lg p-4 space-y-3">
-                      <div className="flex items-start space-x-4">
-                        <Skeleton className="h-16 w-16 rounded-lg flex-shrink-0" />
+                    <div key={index} className="bg-card border border-border rounded-lg p-3 md:p-4 space-y-2 md:space-y-3">
+                      <div className="flex items-start space-x-3 md:space-x-4">
+                        <Skeleton className="h-12 w-12 md:h-16 md:w-16 rounded-lg flex-shrink-0" />
                         <div className="flex-1 space-y-2">
-                          <Skeleton className="h-4 w-3/4" />
-                          <Skeleton className="h-3 w-full" />
-                          <Skeleton className="h-3 w-1/2" />
+                          <Skeleton className="h-3 md:h-4 w-3/4" />
+                          <Skeleton className="h-2.5 md:h-3 w-full" />
+                          <Skeleton className="h-2.5 md:h-3 w-1/2" />
                         </div>
                       </div>
                     </div>
                   ))
                 ) : (
                   events?.slice(0, 4).map((event, index) => (
-                    <div 
-                      key={event.id} 
-                      className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow animate-fade-in"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                      data-testid={`event-item-${event.id}`}
-                    >
-                      <div className="flex items-start space-x-4">
-                        <img 
-                          src={event.imageUrl} 
-                          alt={event.titleEn}
-                          className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
-                          data-testid={`event-image-${event.id}`}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-lg font-semibold text-card-foreground truncate" data-testid={`event-title-${event.id}`}>
-                              {event.titleEn}
-                            </h4>
-                            <Badge 
-                              className={`ml-2 flex-shrink-0 ${getCategoryColor(event.category)}`}
-                              data-testid={`event-category-${event.id}`}
-                            >
-                              {t(
-                                event.category === "Environment" ? "পরিবেশ" : 
-                                event.category === "Community Service" ? "সমাজসেবা" : 
-                                event.category === "Education" ? "শিক্ষা" : 
-                                event.category === "Healthcare" ? "স্বাস্থ্য" :
-                                event.category === "Technology" ? "প্রযুক্তি" :
-                                event.category === "Agriculture" ? "কৃষি" : event.category,
-                                event.category
-                              )}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2 line-clamp-2" data-testid={`event-description-${event.id}`}>
-                            {event.descriptionEn}
-                          </p>
-                          <div className="space-y-1 mb-2">
-                            <div className="flex items-center text-xs text-muted-foreground">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              <span data-testid={`event-date-${event.id}`}>{event.date}</span>
+                    <>
+                      {/* Mobile-only compact card */}
+                      <div 
+                        key={`${event.id}-mobile`} 
+                        className="md:hidden bg-card border border-border rounded-lg p-3 hover:shadow-sm transition-shadow animate-fade-in"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                        data-testid={`event-item-${event.id}-mobile`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={event.imageUrl} 
+                            alt={event.titleEn}
+                            className="h-10 w-10 rounded-md object-cover flex-shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-semibold text-card-foreground truncate">{event.titleEn}</h4>
+                              <Badge className={`px-1.5 py-0 text-[10px] leading-4 ${getCategoryColor(event.category)}`}>
+                                {t(
+                                  event.category === "Environment" ? "পরিবেশ" : 
+                                  event.category === "Community Service" ? "সমাজসেবা" : 
+                                  event.category === "Education" ? "শিক্ষা" : 
+                                  event.category === "Healthcare" ? "স্বাস্থ্য" :
+                                  event.category === "Technology" ? "প্রযুক্তি" :
+                                  event.category === "Agriculture" ? "কৃষি" : event.category,
+                                  event.category
+                                )}
+                              </Badge>
                             </div>
-                            <div className="flex items-center text-xs text-muted-foreground">
-                              <MapPin className="w-3 h-3 mr-1" />
-                              <span data-testid={`event-location-${event.id}`} className="truncate">{event.location}</span>
+                            <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+                              <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{event.date}</span>
+                              <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3" />{event.location}</span>
                             </div>
-                          </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center space-x-3">
-                              <span className="text-primary">
-                                <HandHeart className="w-3 h-3 inline mr-1" />
-                                {formatNumber(event.volunteers)}
-                              </span>
-                              <span className="text-secondary">
-                                <Users className="w-3 h-3 inline mr-1" />
-                                {formatNumber(event.going)}
-                              </span>
-                              <span className="text-accent">
-                                <ThumbsUp className="w-3 h-3 inline mr-1" />
-                                {formatNumber(event.helpful)}
-                              </span>
+                            <div className="mt-1 flex items-center gap-3 text-[11px]">
+                              <span className="text-primary">{formatNumber(event.volunteers)}</span>
+                              <span className="text-secondary">{formatNumber(event.going)}</span>
+                              <span className="text-accent">{formatNumber(event.helpful)}</span>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+
+                      {/* Desktop/Tablet card */}
+                      <div 
+                        key={event.id} 
+                        className="hidden md:block bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow animate-fade-in"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                        data-testid={`event-item-${event.id}`}
+                      >
+                        <div className="flex items-start space-x-4">
+                          <img 
+                            src={event.imageUrl} 
+                            alt={event.titleEn}
+                            className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
+                            data-testid={`event-image-${event.id}`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-2">
+                              <h4 className="text-lg font-semibold text-card-foreground truncate" data-testid={`event-title-${event.id}`}> 
+                                {event.titleEn}
+                              </h4>
+                              <Badge 
+                                className={`ml-2 flex-shrink-0 ${getCategoryColor(event.category)}`}
+                                data-testid={`event-category-${event.id}`}
+                              >
+                                {t(
+                                  event.category === "Environment" ? "পরিবেশ" : 
+                                  event.category === "Community Service" ? "সমাজসেবা" : 
+                                  event.category === "Education" ? "শিক্ষা" : 
+                                  event.category === "Healthcare" ? "স্বাস্থ্য" :
+                                  event.category === "Technology" ? "প্রযুক্তি" :
+                                  event.category === "Agriculture" ? "কৃষি" : event.category,
+                                  event.category
+                                )}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2 line-clamp-2" data-testid={`event-description-${event.id}`}>
+                              {event.descriptionEn}
+                            </p>
+                            <div className="space-y-1 mb-2">
+                              <div className="flex items-center text-xs text-muted-foreground">
+                                <Calendar className="w-3 h-3 mr-1" />
+                                <span data-testid={`event-date-${event.id}`}>{event.date}</span>
+                              </div>
+                              <div className="flex items-center text-xs text-muted-foreground">
+                                <MapPin className="w-3 h-3 mr-1" />
+                                <span data-testid={`event-location-${event.id}`} className="truncate">{event.location}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-3">
+                                <span className="text-primary">
+                                  <HandHeart className="w-3 h-3 inline mr-1" />
+                                  {formatNumber(event.volunteers)}
+                                </span>
+                                <span className="text-secondary">
+                                  <Users className="w-3 h-3 inline mr-1" />
+                                  {formatNumber(event.going)}
+                                </span>
+                                <span className="text-accent">
+                                  <ThumbsUp className="w-3 h-3 inline mr-1" />
+                                  {formatNumber(event.helpful)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   ))
                 )}
               </div>
@@ -312,29 +389,29 @@ export default function Home() {
           </div>
 
           {/* Voting Stats */}
-          <div className="mt-12 bg-card border border-border rounded-xl p-6 animate-fade-in" data-testid="voting-stats">
-            <div className="grid md:grid-cols-3 gap-6 text-center">
-              <div>
-                <div className="text-3xl font-bold text-primary mb-2 count-animation" data-testid="total-votes">
+          <div className="mt-12" data-testid="voting-stats">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+              <div className="bg-card border border-border rounded-xl p-5 text-center animate-fade-in">
+                <div className="text-2xl md:text-3xl font-bold text-primary mb-1.5 md:mb-2 count-animation" data-testid="total-votes">
                   {formatNumber(totalVotes)}
                 </div>
-                <p className="text-muted-foreground">
+                <p className="text-xs md:text-sm text-muted-foreground">
                   {t("মোট প্রদত্ত ভোট", "Total Votes Cast")}
                 </p>
               </div>
-              <div>
-                <div className="text-3xl font-bold text-secondary mb-2 count-animation" data-testid="total-participants">
+              <div className="bg-card border border-border rounded-xl p-5 text-center animate-fade-in" style={{animationDelay: '0.1s'}}>
+                <div className="text-2xl md:text-3xl font-bold text-secondary mb-1.5 md:mb-2 count-animation" data-testid="total-participants">
                   {formatNumber(totalParticipants)}
                 </div>
-                <p className="text-muted-foreground">
+                <p className="text-xs md:text-sm text-muted-foreground">
                   {t("সক্রিয় অংশগ্রহণকারী", "Active Participants")}
                 </p>
               </div>
-              <div>
-                <div className="text-3xl font-bold text-accent mb-2 count-animation" data-testid="total-projects">
+              <div className="bg-card border border-border rounded-xl p-5 text-center animate-fade-in" style={{animationDelay: '0.2s'}}>
+                <div className="text-2xl md:text-3xl font-bold text-accent mb-1.5 md:mb-2 count-animation" data-testid="total-projects">
                   {totalProjects}
                 </div>
-                <p className="text-muted-foreground">
+                <p className="text-xs md:text-sm text-muted-foreground">
                   {t("পোলে থাকা প্রকল্প", "Projects in Poll")}
                 </p>
               </div>
