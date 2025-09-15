@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThumbsUp, MessageSquare, User, Pin, PlusCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiGet, apiPost, apiDelete } from "../lib/api";
 
 // --- Data Schemas (Interfaces) ---
 interface Comment {
@@ -60,14 +61,7 @@ function CreateThreadModal({ isOpen, onClose, categories }: CreateThreadModalPro
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/threads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ titleBn, titleEn, contentBn, contentEn, category })
-      });
-      if (!res.ok) throw new Error('Failed to create thread');
-      return res.json();
+      return apiPost('/api/threads', { titleBn, titleEn, contentBn, contentEn, category });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/threads'] });
@@ -152,11 +146,8 @@ function ThreadDetailsModal({ thread, isOpen, onClose }: ThreadDetailsModalProps
       let cancelled = false;
       (async () => {
         try {
-          const res = await fetch('/api/auth/me', { credentials: 'include' });
-          if (res.ok) {
-            const me = await res.json();
-            if (!cancelled) setIsGovernmental(me.role === 'governmental');
-          }
+          const me = await apiGet<any>('/api/auth/me');
+          if (!cancelled) setIsGovernmental(me.role === 'governmental');
         } catch {}
       })();
       return () => { cancelled = true; };
@@ -166,22 +157,13 @@ function ThreadDetailsModal({ thread, isOpen, onClose }: ThreadDetailsModalProps
       enabled: !!thread,
       queryKey: ['/api/threads', thread?.id, 'comments'],
       queryFn: async () => {
-        const res = await fetch(`/api/threads/${thread!.id}/comments`, { credentials: 'include' });
-        if (!res.ok) throw new Error('Failed to load comments');
-        return res.json();
+        return apiGet(`/api/threads/${thread!.id}/comments`);
       }
     });
 
     const commentMutation = useMutation({
       mutationFn: async () => {
-        const res = await fetch(`/api/threads/${thread!.id}/comments`, {
-          method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: newComment })
-        });
-        if (!res.ok) {
-          const errorText = await res.text().catch(() => '');
-          throw new Error(`${res.status}: ${errorText}`);
-        }
-        return res.json();
+        return apiPost(`/api/threads/${thread!.id}/comments`, { text: newComment });
       },
       onSuccess: () => {
         setNewComment("");
@@ -275,11 +257,8 @@ function ThreadCard({ thread, index, onOpenModal }: ThreadCardProps) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (res.ok) {
-          const me = await res.json();
-          if (!cancelled) setIsGovernmental(me.role === 'governmental');
-        }
+        const me = await apiGet<any>('/api/auth/me');
+        if (!cancelled) setIsGovernmental(me.role === 'governmental');
       } catch {}
     })();
     return () => { cancelled = true; };
@@ -307,9 +286,7 @@ function ThreadCard({ thread, index, onOpenModal }: ThreadCardProps) {
   const queryClient = useQueryClient();
   const likeMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/threads/${thread.id}/like`, { method: 'POST' });
-      if (!res.ok) throw new Error('Failed to like');
-      return res.json();
+      return apiPost(`/api/threads/${thread.id}/like`);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
   });
@@ -377,9 +354,7 @@ function PinButton({ id, action, compact = false, onClickStop = false }: { id: s
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/threads/${id}/${action}`, { method: 'POST', credentials: 'include' });
-      if (!res.ok) throw new Error('Failed');
-      return res.json();
+      return apiPost(`/api/threads/${id}/${action}`);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/threads'] })
   });
@@ -394,9 +369,7 @@ function DeleteButton({ id, onDeleted, compact = false, onClickStop = false }: {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/threads/${id}`, { method: 'DELETE', credentials: 'include' });
-      if (!res.ok) throw new Error('Failed');
-      return res.json();
+      return apiDelete(`/api/threads/${id}`);
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/api/threads'] }); onDeleted && onDeleted(); }
   });
@@ -420,8 +393,8 @@ export default function Threads() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (!cancelled) setIsAuthenticated(res.ok);
+        await apiGet('/api/auth/me');
+        if (!cancelled) setIsAuthenticated(true);
       } catch {
         if (!cancelled) setIsAuthenticated(false);
       }
@@ -442,9 +415,7 @@ export default function Threads() {
   const { data: threads, isLoading } = useQuery<ThreadRow[]>({
     queryKey: ["/api/threads"],
     queryFn: async () => {
-      const res = await fetch('/api/threads');
-      if (!res.ok) throw new Error('Failed to load threads');
-      return res.json();
+      return apiGet('/api/threads');
     },
   });
 
