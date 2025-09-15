@@ -157,27 +157,27 @@ export default function About() {
           </p>
         </div>
 
-        {/* Main Content - 2 horizontal parts: image left, 3 cards right */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16 h-96">
+        {/* Main Content - responsive: stacks on mobile, two columns on md+ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {/* CivicMoncho Image - Takes left half */}
           <div className="md:col-span-1">
-            <Card className="h-full">
-              <CardContent className="p-0 h-full">
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
                 <img 
                   src="/civic.jpg" 
                   alt={language === "bn" ? aboutData.titleBn : aboutData.titleEn}
-                  className="w-full h-full object-cover rounded-lg"
+                  className="w-full aspect-[16/9] md:h-full object-cover"
                   data-testid="about-image"
                 />
               </CardContent>
             </Card>
           </div>
 
-          {/* Right side - 3 vertical cards */}
-          <div className="md:col-span-1 grid grid-rows-3 gap-4 h-full">
+          {/* Right side - cards list; avoid fixed heights on mobile */}
+          <div className="md:col-span-1 grid gap-4">
             {/* Mission */}
-            <Card className="h-full">
-              <CardContent className="p-4 h-full flex flex-col justify-center">
+            <Card>
+              <CardContent className="p-4">
                 <div className="flex items-center mb-3">
                   <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
                     <Target className="w-5 h-5 text-white" />
@@ -193,8 +193,8 @@ export default function About() {
             </Card>
 
             {/* Vision */}
-            <Card className="h-full">
-              <CardContent className="p-4 h-full flex flex-col justify-center">
+            <Card>
+              <CardContent className="p-4">
                 <div className="flex items-center mb-3">
                   <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
                     <Eye className="w-5 h-5 text-white" />
@@ -210,8 +210,8 @@ export default function About() {
             </Card>
 
             {/* Values */}
-            <Card className="h-full">
-              <CardContent className="p-4 h-full flex flex-col justify-center">
+            <Card>
+              <CardContent className="p-4">
                 <div className="flex items-center mb-3">
                   <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
                     <Heart className="w-5 h-5 text-white" />
