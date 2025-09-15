@@ -8,9 +8,20 @@ import cors from "cors";
 
 const app = express();
 
+// Behind a proxy in production (e.g., Render) so secure cookies work
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 // Enable CORS for cross-origin requests from client
 app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  // Allow a single origin or comma-separated list in CLIENT_URL
+  origin: (origin, callback) => {
+    const allowed = (process.env.CLIENT_URL || "http://localhost:3000").split(",").map(o => o.trim());
+    if (!origin) return callback(null, allowed[0]);
+    if (allowed.includes(origin)) return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true
 }));
 
@@ -26,7 +37,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      sameSite: "lax",
+      // Cross-site cookies required when frontend and API are on different domains
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       secure: process.env.NODE_ENV === "production",
       maxAge: 1000 * 60 * 60 * 24 * 7,
     },
