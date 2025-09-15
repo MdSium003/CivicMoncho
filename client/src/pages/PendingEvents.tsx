@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { apiGet, apiPost, apiDelete } from "@/lib/api";
 
 export default function PendingEvents() {
   const { t } = useLanguage();
@@ -20,12 +21,7 @@ export default function PendingEvents() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (!res.ok) {
-          if (!cancelled) setLocation('/login');
-          return;
-        }
-        const me = await res.json();
+        const me = await apiGet<any>('/api/auth/me');
         if (me.role !== 'governmental') {
           if (!cancelled) setLocation('/');
         }
@@ -42,8 +38,7 @@ export default function PendingEvents() {
 
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/events/pending/${id}/approve`, { method: 'POST', credentials: 'include' });
-      if (!res.ok) throw new Error('Approve failed');
+      await apiPost(`/api/events/pending/${id}/approve`);
       return id;
     },
     onSuccess: (id: string) => {
@@ -58,8 +53,7 @@ export default function PendingEvents() {
 
   const rejectMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/events/pending/${id}`, { method: 'DELETE', credentials: 'include' });
-      if (!res.ok) throw new Error('Reject failed');
+      await apiDelete(`/api/events/pending/${id}`);
       return id;
     },
     onSuccess: (id: string) => {

@@ -10,6 +10,7 @@ import { Calendar, MapPin, Users, HandHeart, ThumbsUp, Trash2, Clock } from "luc
 import EventDetailsModal from "@/components/EventDetailsModal";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { apiGet, apiDelete } from "@/lib/api";
 
 interface EventCardProps {
   event: Event;
@@ -219,18 +220,10 @@ export default function Events() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (res.ok) {
-          const me = await res.json();
-          if (!cancelled) {
-            setIsGovernmental(me.role === 'governmental');
-            setIsLoggedIn(true);
-          }
-        } else {
-          if (!cancelled) {
-            setIsGovernmental(false);
-            setIsLoggedIn(false);
-          }
+        const me = await apiGet<any>('/api/auth/me');
+        if (!cancelled) {
+          setIsGovernmental(me.role === 'governmental');
+          setIsLoggedIn(true);
         }
       } catch {
         if (!cancelled) {
@@ -258,9 +251,7 @@ export default function Events() {
 
   const deleteMutation = useMutation({
     mutationFn: async (eventId: string) => {
-      const res = await fetch(`/api/events/${eventId}`, { method: 'DELETE', credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to delete');
-      return res.json();
+      return apiDelete(`/api/events/${eventId}`);
     },
     onSuccess: () => {
       toast({ title: t('ইভেন্ট মুছে ফেলা হয়েছে', 'Event deleted') });

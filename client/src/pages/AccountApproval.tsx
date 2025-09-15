@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useLanguage } from "../contexts/LanguageContext";
 import { Check, X, User, Mail, Phone, MapPin, Calendar } from 'lucide-react';
+import { apiGet, apiPost, apiDelete } from "@/lib/api";
 
 // --- ADDED: Self-contained Button component to resolve import error ---
 const Button = ({ children, className, variant, size, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'outline' | 'ghost' | 'default', size?: 'sm' | 'icon' | 'default' }) => {
@@ -59,20 +60,19 @@ export default function AccountApproval() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (res.status === 401) {
-          navigate('/login');
-          return;
-        }
-        const user = await res.json();
+        await apiGet('/api/auth/me');
+        // ok
+      } catch (e) {
+        navigate('/login');
+        return;
+      }
+      try {
+        const user = await apiGet<any>('/api/auth/me');
         if (user.role !== 'governmental') {
           navigate('/myprofile');
           return;
         }
-        
-        const approvalsRes = await fetch('/api/approvals', { credentials: 'include' });
-        if (!approvalsRes.ok) throw new Error('Failed to fetch approvals');
-        const data = await approvalsRes.json();
+        const data = await apiGet<PendingApproval[]>('/api/approvals');
         if (!cancelled) setApprovals(data);
       } catch (err: any) {
         if (!cancelled) setError(err.message || 'Failed to load approvals');
@@ -85,11 +85,7 @@ export default function AccountApproval() {
 
   const handleApprove = async (id: string) => {
     try {
-      const res = await fetch(`/api/approvals/${id}/approve`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error('Failed to approve');
+      await apiPost(`/api/approvals/${id}/approve`);
       setApprovals(prev => prev.filter(a => a.id !== id));
     } catch (err: any) {
       setError(err.message || 'Failed to approve');
@@ -101,11 +97,7 @@ export default function AccountApproval() {
       return;
     }
     try {
-      const res = await fetch(`/api/approvals/${id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-      if (!res.ok) throw new Error('Failed to delete');
+      await apiDelete(`/api/approvals/${id}`);
       setApprovals(prev => prev.filter(a => a.id !== id));
     } catch (err: any) {
       setError(err.message || 'Failed to delete');

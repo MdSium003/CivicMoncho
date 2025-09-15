@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { apiGet } from "@/lib/api";
 
 export default function Projects() {
   const { t } = useLanguage();
@@ -18,11 +19,8 @@ export default function Projects() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (res.ok) {
-          const me = await res.json();
-          if (!cancelled) setIsGovernmental(me.role === 'governmental');
-        }
+        const me = await apiGet<any>('/api/auth/me');
+        if (!cancelled) setIsGovernmental(me.role === 'governmental');
       } catch {}
     })();
     return () => { cancelled = true; };
