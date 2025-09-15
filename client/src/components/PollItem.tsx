@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { apiGet } from "@/lib/api";
 
 interface PollItemProps {
   poll: Poll;
@@ -27,9 +28,7 @@ export default function PollItem({ poll, index, totalVotes }: PollItemProps) {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/projects/${poll.id}/vote-status`, { credentials: "include" });
-        if (!res.ok) return;
-        const data = await res.json();
+        const data = await apiGet<{ voted: boolean }>(`/api/projects/${poll.id}/vote-status`);
         if (!cancelled) setHasVoted(!!data.voted);
       } catch {
         // ignore

@@ -67,7 +67,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      await apiPost('/api/auth/logout');
       setUser(null);
       window.dispatchEvent(new Event('auth:changed'));
       setLocation('/');
