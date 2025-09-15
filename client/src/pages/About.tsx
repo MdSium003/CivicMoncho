@@ -164,7 +164,7 @@ export default function About() {
             <Card className="overflow-hidden">
               <CardContent className="p-0">
                 <img 
-                  src="/civic.jpg" 
+                  src="/aboutlogo.jpeg" 
                   alt={language === "bn" ? aboutData.titleBn : aboutData.titleEn}
                   className="w-full aspect-[16/9] md:h-full object-cover"
                   data-testid="about-image"
