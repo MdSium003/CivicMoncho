@@ -131,24 +131,25 @@ export default function Home() {
                   projects?.slice(0, 4).map((project, index) => (
                     <>
                       {/* Mobile-only compact card */}
+                      <Link href="/projects">
                       <div 
                         key={`${project.id}-mobile`}
-                        className="md:hidden bg-card border border-border rounded-lg p-3 hover:shadow-sm transition-shadow animate-fade-in"
+                        className="md:hidden bg-card border border-border rounded-lg p-3 hover:shadow-sm transition-shadow animate-fade-in max-w-[320px] mx-auto cursor-pointer"
                         style={{ animationDelay: `${index * 0.1}s` }}
                         data-testid={`project-item-${project.id}-mobile`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col gap-2">
                           <img 
                             src={project.imageUrl} 
                             alt={project.titleEn}
-                            className="h-10 w-10 rounded-md object-cover flex-shrink-0"
+                            className="h-24 w-full rounded-md object-cover"
                           />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-sm font-semibold text-card-foreground truncate">
+                          <div className="min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className="text-sm font-semibold text-card-foreground line-clamp-2">
                                 {project.titleEn}
                               </h4>
-                              <Badge variant="outline" className="px-1.5 py-0 text-[10px] leading-4">
+                              <Badge variant="outline" className="px-1.5 py-0 text-[10px] leading-4 flex-shrink-0">
                                 {project.category}
                               </Badge>
                             </div>
@@ -159,11 +160,13 @@ export default function Home() {
                           </div>
                         </div>
                       </div>
+                      </Link>
 
                       {/* Desktop/Tablet card */}
+                      <Link href="/projects">
                       <div 
                         key={project.id}
-                        className="hidden md:block bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow animate-fade-in"
+                        className="hidden md:block bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow animate-fade-in cursor-pointer"
                         style={{ animationDelay: `${index * 0.1}s` }}
                         data-testid={`project-item-${project.id}`}
                       >
@@ -199,6 +202,7 @@ export default function Home() {
                           </div>
                         </div>
                       </div>
+                      </Link>
                     </>
                   ))
                 )}
@@ -236,22 +240,23 @@ export default function Home() {
                   events?.slice(0, 4).map((event, index) => (
                     <>
                       {/* Mobile-only compact card */}
+                      <Link href="/events">
                       <div 
                         key={`${event.id}-mobile`} 
-                        className="md:hidden bg-card border border-border rounded-lg p-3 hover:shadow-sm transition-shadow animate-fade-in"
+                        className="md:hidden bg-card border border-border rounded-lg p-3 hover:shadow-sm transition-shadow animate-fade-in max-w-[320px] mx-auto cursor-pointer"
                         style={{ animationDelay: `${index * 0.1}s` }}
                         data-testid={`event-item-${event.id}-mobile`}
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col gap-2">
                           <img 
                             src={event.imageUrl} 
                             alt={event.titleEn}
-                            className="h-10 w-10 rounded-md object-cover flex-shrink-0"
+                            className="h-24 w-full rounded-md object-cover"
                           />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-sm font-semibold text-card-foreground truncate">{event.titleEn}</h4>
-                              <Badge className={`px-1.5 py-0 text-[10px] leading-4 ${getCategoryColor(event.category)}`}>
+                          <div className="min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className="text-sm font-semibold text-card-foreground line-clamp-2">{event.titleEn}</h4>
+                              <Badge className={`px-1.5 py-0 text-[10px] leading-4 ${getCategoryColor(event.category)} flex-shrink-0`}>
                                 {t(
                                   event.category === "Environment" ? "পরিবেশ" : 
                                   event.category === "Community Service" ? "সমাজসেবা" : 
@@ -275,11 +280,13 @@ export default function Home() {
                           </div>
                         </div>
                       </div>
+                      </Link>
 
                       {/* Desktop/Tablet card */}
+                      <Link href="/events">
                       <div 
                         key={event.id} 
-                        className="hidden md:block bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow animate-fade-in"
+                        className="hidden md:block bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow animate-fade-in cursor-pointer"
                         style={{ animationDelay: `${index * 0.1}s` }}
                         data-testid={`event-item-${event.id}`}
                       >
@@ -342,6 +349,7 @@ export default function Home() {
                           </div>
                         </div>
                       </div>
+                      </Link>
                     </>
                   ))
                 )}
